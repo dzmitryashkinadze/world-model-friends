@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# non relevant stuff
+*.swp
+*.un~
+*.md~
+
+# data
+data/
+
+# uv
+.python-version
+
+# Virtual environments
+.venv
