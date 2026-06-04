@@ -23,8 +23,7 @@ def train_one_epoch(model, dataloader, optimizer, criterion, device):
         # Forward pass
         # Note: The model implementation might need to handle the padding
         # if we are using it, but for a simple draft, let's assume it works.
-        # In a real scenario, we'd use a mask for the transformer.
-        preds = model(speaker_seq, dialogue_seq, target_speaker)
+        preds = model(speaker_seq[:, -1, :], dialogue_seq[:, -1, :], target_speaker)
 
         loss = criterion(preds, target_emb)
         loss.backward()
@@ -43,8 +42,7 @@ def validate(model, dataloader, criterion, device):
             dialogue_seq = batch["dialogue_seq"].to(device)
             target_speaker = batch["target_speaker"].to(device)
             target_emb = batch["target_emb"].to(device)
-
-            preds = model(speaker_seq, dialogue_seq, target_speaker)
+            preds = model(speaker_seq[:, -1, :], dialogue_seq[:, -1, :], target_speaker)
             loss = criterion(preds, target_emb)
             total_loss += loss.item()
     return total_loss / len(dataloader)
@@ -80,12 +78,9 @@ def main(training_df, validation_df):
     # In the model, seq_len is used for initialization but not strictly for forward.
     # Actually, it's not used in my model's __init__ except as a param.
 
-    print(f"Detected: num_speakers={num_speakers}, emb_dim={emb_dim}")
-
     model = WorldModel(
         num_speakers=num_speakers,
         emb_dim=emb_dim,
-        seq_len=10,  # default/max
     ).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
