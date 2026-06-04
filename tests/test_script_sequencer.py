@@ -5,6 +5,7 @@ import polars as pl
 from world_model_friends.data_wrangling.script_sequencer import (
     embed_sequences,
     generate_sequences,
+    split_data,
 )
 
 
@@ -88,3 +89,30 @@ def test_prepare_training_data():
         # target_name "Bob" -> [0.0, 1.0, 0.0]
         assert training_df["context_speaker_identity"].to_list()[1] == [1.0, 0.0, 0.0]
         assert training_df["target_speaker_identity"].to_list()[1] == [0.0, 1.0, 0.0]
+
+
+def test_split_data():
+    # Create a dummy dataframe
+    data = {
+        "id": range(100),
+        "value": [i * 0.5 for i in range(100)],
+    }
+    df = pl.DataFrame(data)
+
+    train_ratio = 0.7
+    val_ratio = 0.15
+
+    train_df, val_df, test_df = split_data(
+        df, train_ratio=train_ratio, val_ratio=val_ratio
+    )
+
+    # Check sum of lengths
+    assert len(train_df) + len(val_df) + len(test_df) == len(df)
+
+    # Check approximate lengths
+    # 100 * 0.7 = 70
+    # 100 * (0.7 + 0.15) = 85 -> 85 - 70 = 15
+    # 100 - 85 = 15
+    assert len(train_df) == 70
+    assert len(val_df) == 15
+    assert len(test_df) == 15
