@@ -20,14 +20,12 @@ The system is implemented as a **Click-based CLI**, providing a modular workflow
 * `create_datasets`: Load CSV, generate sequences, and store embeddings in SQLite.
 * `train`: Train the latent transition model.
 
-## Project Roadmap
-
-### 1. Data Loading
-* **Goal:** Load the structured dialogue dataset.
+### Data
+The project is based on the following Kaggle dataset (to be placed in data directory):
 * **Source:** [Kaggle Friends Script Dataset](https://www.kaggle.com/datasets/kimmik123/friends-scriptcsv) (`data/Friends_script.csv`, Columns: `Name`, `Lines`).
 
 ### 2. Training Dataset Compilation
-* **Goal:** Construct a structured dataset for supervised learning.
+Constructs a structured dataset for supervised learning.
 * **Pipeline:**
     1. **Sequence Generation**: Apply a sliding window of variable size $N \in [1, 10]$ to the dialogue stream.
     2. **Hybrid Embedding**: For each turn in the sequence, generate a dual-component representation:
@@ -42,7 +40,7 @@ The system is implemented as a **Click-based CLI**, providing a modular workflow
     4. **Data Partitioning**: Split the resulting dataset into **Training**, **Validation**, and **Test** sets.
 
 ### 3. World Model Training
-* **Goal:** Train a predictor model that maps a sequence of context to the next semantic state.
+Trains a predictor model that maps a sequence of context to the next semantic state.
 * **Training Inputs:**
     1. **Speaker Sequence:** A sequence of one-hot vectors representing the identity of the speaker for each turn in the sequence.
     2. **Dialogue Sequence:** A sequence of semantic embeddings for the dialogue turns.

@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-compile-datasets = "world_model_friends.cli:load_data"
+compile-datasets = "world_model_friends.cli:compile_datasets"
 
 [tool.uv]
 package = true
