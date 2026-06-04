@@ -5,3 +5,4 @@ select = ["E", "F", "W", "I", "UP", "N"]
 [format]
 # Use double quotes
 quote-style = "double"
+preview = true

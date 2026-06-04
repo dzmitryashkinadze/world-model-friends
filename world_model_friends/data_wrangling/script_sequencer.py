@@ -67,14 +67,12 @@ def generate_sequences(
         # 4. target_text
         target_text = lines[target_idx]
 
-        results.append(
-            {
-                "context_names": context_names_list,
-                "context_text": context_text,
-                "target_name": target_name,
-                "target_text": target_text,
-            }
-        )
+        results.append({
+            "context_names": context_names_list,
+            "context_text": context_text,
+            "target_name": target_name,
+            "target_text": target_text,
+        })
 
     return pl.DataFrame(results)
 
