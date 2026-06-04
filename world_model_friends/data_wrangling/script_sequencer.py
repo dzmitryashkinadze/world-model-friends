@@ -3,6 +3,8 @@ import random
 
 import polars as pl
 
+from world_model_friends.ai.embeddings import embed_string
+
 
 def generate_sequences(
     df: pl.DataFrame, num_sequences: int, max_context_length: int
@@ -72,6 +74,49 @@ def generate_sequences(
             "context_text": context_text,
             "target_name": target_name,
             "target_text": target_text,
+            "context_length": cl,
+        })
+
+    return pl.DataFrame(results)
+
+
+def prepare_training_data(
+    sequences_df: pl.DataFrame, all_names: list[str]
+) -> pl.DataFrame:
+    """
+    Transforms generated sequences into training data.
+    [1] context_names -> multi-hot vector
+    [2] context_text -> semantic embedding
+    [3] target_name -> one-hot vector
+    [4] target_text -> semantic embedding
+    """
+    num_names = len(all_names)
+    name_to_idx = {name: i for i, name in enumerate(all_names)}
+
+    results = []
+    for row in sequences_df.iter_rows(named=True):
+        # 1. Multi-hot for context names
+        context_vec = [0.0] * num_names
+        for name in row["context_names"]:
+            if name in name_to_idx:
+                context_vec[name_to_idx[name]] = 1.0
+
+        # 2. Embed context text
+        context_emb = embed_string(row["context_text"])
+
+        # 3. One-hot for target name
+        target_vec = [0.0] * num_names
+        if row["target_name"] in name_to_idx:
+            target_vec[name_to_idx[row["target_name"]]] = 1.0
+
+        # 4. Embed target text
+        target_emb = embed_string(row["target_text"])
+
+        results.append({
+            "context_speaker_identity": context_vec,
+            "context_text_embedding": context_emb,
+            "target_speaker_identity": target_vec,
+            "target_text_embedding": target_emb,
         })
 
     return pl.DataFrame(results)
@@ -93,5 +138,11 @@ if __name__ == "__main__":
 
         print(f"\nGenerated {len(sequences_df)} sequences:")
         print(sequences_df)
+
+        # Demonstrate preparation
+        all_names = df["Name"].unique().to_list()
+        training_df = prepare_training_data(sequences_df, all_names)
+        print("\nPrepared training data (first 2 rows):")
+        print(training_df.head(2))
     else:
         print(f"Could not find {csv_path} for demonstration.")
