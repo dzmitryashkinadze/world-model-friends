@@ -2,7 +2,7 @@ import sys
 
 import click
 
-import world_model_friends.data_wrangling.loader as loader
+import world_model_friends.data_wrangling.io as io
 import world_model_friends.data_wrangling.script_sequencer as sequencer
 
 
@@ -45,7 +45,7 @@ def compile_datasets(file, num_sequences, max_context_length, output):
     """Reads CSV, picks sequences, embeds them and stores on disk."""
     try:
         # 1. Load CSV
-        df = loader.load_csv_to_polars(file)
+        df = io.load_csv_to_polars(file)
         click.echo(f"Successfully loaded {file}")
 
         # 2. Generate sequences
@@ -54,14 +54,23 @@ def compile_datasets(file, num_sequences, max_context_length, output):
         )
         click.echo(f"Generated {len(sequences_df)} sequences.")
 
-        # 3. Prepare training data (includes embedding)
+        # 3. Embed sequences
         all_names = df["Name"].unique().to_list()
-        training_df = sequencer.prepare_training_data(sequences_df, all_names)
-        click.echo("Prepared training data with embeddings.")
+        training_df = sequencer.embed_sequences(sequences_df, all_names)
+        click.echo("Embedded sequences.")
 
-        # 4. Store on disk
-        training_df.write_parquet(output)
-        click.echo(f"Successfully saved processed data to {output}")
+        # 4. Split into train, test, and val folds
+        train_df, val_df, test_df = sequencer.split_data(training_df)
+        click.echo("Split training data into train, test, and val folds.")
+
+        # 5. Store on disk
+        train_output, test_output, val_output = io.save_folds(
+            train_df, test_df, val_df, output
+        )
+
+        click.echo(
+            f"Successfully saved folds to: {train_output}, {test_output}, {val_output}"
+        )
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)

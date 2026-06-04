@@ -80,9 +80,7 @@ def generate_sequences(
     return pl.DataFrame(results)
 
 
-def prepare_training_data(
-    sequences_df: pl.DataFrame, all_names: list[str]
-) -> pl.DataFrame:
+def embed_sequences(sequences_df: pl.DataFrame, all_names: list[str]) -> pl.DataFrame:
     """
     Transforms generated sequences into training data.
     [1] context_names -> multi-hot vector
@@ -122,6 +120,31 @@ def prepare_training_data(
     return pl.DataFrame(results)
 
 
+def split_data(
+    df: pl.DataFrame, train_ratio: float = 0.7, val_ratio: float = 0.15
+) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+    """
+    Splits the DataFrame into train, test, and validation sets.
+
+    df: Polars DataFrame to split
+    train_ratio: Proportion of data for training
+    val_ratio: Proportion of data for validation
+    (test_ratio will be 1 - train_ratio - val_ratio)
+    """
+    # Shuffle the data
+    df_shuffled = df.sample(fraction=1.0, shuffle=True)
+
+    n = len(df_shuffled)
+    train_end = int(n * train_ratio)
+    val_end = int(n * (train_ratio + val_ratio))
+
+    train_df = df_shuffled.slice(0, train_end)
+    val_df = df_shuffled.slice(train_end, val_end - train_end)
+    test_df = df_shuffled.slice(val_end, n - val_end)
+
+    return train_df, val_df, test_df
+
+
 if __name__ == "__main__":
     # Demonstration
     csv_path = "data/Friends_script.csv"
@@ -141,7 +164,7 @@ if __name__ == "__main__":
 
         # Demonstrate preparation
         all_names = df["Name"].unique().to_list()
-        training_df = prepare_training_data(sequences_df, all_names)
+        training_df = embed_sequences(sequences_df, all_names)
         print("\nPrepared training data (first 2 rows):")
         print(training_df.head(2))
     else:

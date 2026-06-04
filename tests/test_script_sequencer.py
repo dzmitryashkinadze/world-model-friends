@@ -3,8 +3,8 @@ from unittest.mock import patch
 import polars as pl
 
 from world_model_friends.data_wrangling.script_sequencer import (
+    embed_sequences,
     generate_sequences,
-    prepare_training_data,
 )
 
 
@@ -62,7 +62,7 @@ def test_prepare_training_data():
         }
         sequences_df = pl.DataFrame(data)
 
-        training_df = prepare_training_data(sequences_df, all_names)
+        training_df = embed_sequences(sequences_df, all_names)
 
         # Assertions
         assert len(training_df) == 2
