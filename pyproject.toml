@@ -10,4 +10,14 @@ dependencies = [
     "pre-commit>=4.6.0",
     "pytest>=9.0.3",
     "ruff>=0.15.15",
+    "sentence-transformers>=3.0.0",
 ]
+
+[project.scripts]
+compile-datasets = "world_model_friends.cli:load_data"
+
+[tool.uv]
+package = true
+
+[tool.setuptools]
+packages = ["world_model_friends"]

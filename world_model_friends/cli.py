@@ -2,7 +2,7 @@ import sys
 
 import click
 
-import data_wrangling.loader as loader
+import world_model_friends.data_wrangling.loader as loader
 
 
 @click.group()
@@ -13,7 +13,11 @@ def cli():
 
 @cli.command(name="load")
 @click.option(
-    "--file", "-f", type=click.Path(exists=True), help="Path to the CSV file."
+    "--file",
+    "-f",
+    type=click.Path(exists=True),
+    default="data/Friends_script.csv",
+    help="Path to the CSV file.",
 )
 def load_data(file):
     """Loads a CSV file using the data_wrangling loader."""
