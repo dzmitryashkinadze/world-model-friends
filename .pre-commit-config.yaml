@@ -12,9 +12,13 @@ repos:
         entry: uv run ruff format .
         language: system
         pass_filenames: false
+      - id: deptry
+        name: Deptry
+        entry: uv run deptry .
+        language: system
+        pass_filenames: false
       - id: pytest
         name: Pytest
         entry: uv run pytest
         language: system
         pass_filenames: false
-
