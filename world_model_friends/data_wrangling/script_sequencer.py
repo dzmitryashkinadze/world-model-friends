@@ -1,4 +1,3 @@
-import os
 import random
 
 import polars as pl
@@ -119,10 +118,10 @@ def embed_sequences(sequences_df: pl.DataFrame) -> pl.DataFrame:
         target_emb = embed_string(row["target_text"])
 
         results.append({
-            "context_speaker_identity": context_vec,
-            "context_text_embedding": context_emb,
-            "target_speaker_identity": target_vec,
-            "target_text_embedding": target_emb,
+            "context_identity": context_vec,
+            "context_embedding": context_emb,
+            "target_identity": target_vec,
+            "target_embedding": target_emb,
         })
 
     return pl.DataFrame(results)
@@ -151,29 +150,3 @@ def split_data(
     test_df = df_shuffled.slice(val_end, n - val_end)
 
     return train_df, val_df, test_df
-
-
-if __name__ == "__main__":
-    # Demonstration
-    csv_path = "data/Friends_script.csv"
-    if os.path.exists(csv_path):
-        # Polars read_csv
-        df = pl.read_csv(csv_path)
-        print(f"Loaded {csv_path}")
-        print(f"Columns: {df.columns}")
-
-        # Generate 10 sequences with max context length 5
-        n_val = 10
-        k_val = 5
-        sequences_df = generate_sequences(df, n_val, k_val)
-
-        print(f"\nGenerated {len(sequences_df)} sequences:")
-        print(sequences_df)
-
-        # Demonstrate preparation
-        all_names = df["Name"].unique().to_list()
-        training_df = embed_sequences(sequences_df, all_names)
-        print("\nPrepared training data (first 2 rows):")
-        print(training_df.head(2))
-    else:
-        print(f"Could not find {csv_path} for demonstration.")

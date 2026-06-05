@@ -67,20 +67,20 @@ def test_prepare_training_data():
         # Assertions
         assert len(training_df) == 2
         assert training_df.columns == [
-            "context_speaker_identity",
-            "context_text_embedding",
-            "target_speaker_identity",
-            "target_text_embedding",
+            "context_identity",
+            "context_embedding",
+            "target_identity",
+            "target_embedding",
         ]
 
         # Check embeddings
-        assert training_df["context_text_embedding"].to_list()[0] == mock_emb_val
-        assert training_df["target_text_embedding"].to_list()[0] == mock_emb_val
+        assert training_df["context_embedding"].to_list()[0] == mock_emb_val
+        assert training_df["target_embedding"].to_list()[0] == mock_emb_val
 
         # Check identities (Row 0)
         # context_names ["Alice", "Bob"] -> [1.0, 1.0, 0.0]
         # target_name "Charlie" -> [0.0, 0.0, 1.0]
-        assert training_df["context_speaker_identity"].to_list()[0] == [
+        assert training_df["context_identity"].to_list()[0] == [
             1.0,
             1.0,
             0.0,
@@ -89,7 +89,7 @@ def test_prepare_training_data():
             0.0,
             0.0,
         ]
-        assert training_df["target_speaker_identity"].to_list()[0] == [
+        assert training_df["target_identity"].to_list()[0] == [
             0.0,
             0.0,
             0.0,
@@ -102,7 +102,7 @@ def test_prepare_training_data():
         # Check identities (Row 1)
         # context_names ["Alice"] -> [1.0, 0.0, 0.0]
         # target_name "Bob" -> [0.0, 1.0, 0.0]
-        assert training_df["context_speaker_identity"].to_list()[1] == [
+        assert training_df["context_identity"].to_list()[1] == [
             0.0,
             0.0,
             1.0,
@@ -111,7 +111,7 @@ def test_prepare_training_data():
             0.0,
             0.0,
         ]
-        assert training_df["target_speaker_identity"].to_list()[1] == [
+        assert training_df["target_identity"].to_list()[1] == [
             0.0,
             0.0,
             0.0,

@@ -24,9 +24,6 @@ class WorldModel(nn.Module):
         dropout: float = 0.1,
     ):
         super().__init__()
-        self.num_speakers = num_speakers
-        self.emb_dim = emb_dim
-
         # Input dimension: context_identities (num_speakers) +
         # context_embedding (emb_dim) + target_identity (num_speakers)
         self.input_dim = num_speakers + emb_dim + num_speakers
