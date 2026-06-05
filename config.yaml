@@ -1,6 +1,6 @@
 process:
   file: "data/Friends_script.csv"
-  num_sequences: 100_000
+  num_sequences: 10_000
   max_context_length: 5
   output: "data/processed_data.parquet"
   main_characters: [

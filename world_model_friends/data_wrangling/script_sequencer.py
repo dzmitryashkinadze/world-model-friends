@@ -20,6 +20,10 @@ def generate_sequences(
     max_context_length: Max length of context
     """
     results = []
+
+    # drop nans
+    df = df.drop_nulls(subset=["Lines", "Name"])
+    df = df.filter(pl.col("Lines").str.strip_chars() != "")
     df_len = len(df)
 
     # characters configuration
@@ -124,6 +128,9 @@ def embed_sequences(sequences_df: pl.DataFrame) -> pl.DataFrame:
         context_embeddings += embed_batch(
             model=model, texts=context_texts[i : i + batch_size]
         )
+
+    print()
+    print("Embedding targets:")
     for i in tqdm(range(0, len(target_texts), batch_size)):
         target_embeddings += embed_batch(
             model=model, texts=target_texts[i : i + batch_size]
@@ -159,5 +166,9 @@ def split_data(
     train_df = df_shuffled.slice(0, train_end)
     val_df = df_shuffled.slice(train_end, val_end - train_end)
     test_df = df_shuffled.slice(val_end, n - val_end)
+    print()
+    print(f"Written {train_df.height} training samples")
+    print(f"Written {val_df.height} validation samples")
+    print(f"Written {test_df.height} testing samples")
 
     return train_df, val_df, test_df
