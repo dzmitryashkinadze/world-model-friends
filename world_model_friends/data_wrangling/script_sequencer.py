@@ -88,8 +88,8 @@ def embed_sequences(sequences_df: pl.DataFrame, all_names: list[str]) -> pl.Data
     [3] target_name -> one-hot vector
     [4] target_text -> semantic embedding
     """
-    num_names = len(all_names)
     name_to_idx = {name: i for i, name in enumerate(all_names)}
+    num_names = len(all_names)
 
     results = []
     for row in sequences_df.iter_rows(named=True):
@@ -104,8 +104,9 @@ def embed_sequences(sequences_df: pl.DataFrame, all_names: list[str]) -> pl.Data
 
         # 3. One-hot for target name
         target_vec = [0.0] * num_names
-        if row["target_name"] in name_to_idx:
-            target_vec[name_to_idx[row["target_name"]]] = 1.0
+        target_name = row["target_name"]
+        if target_name in name_to_idx:
+            target_vec[name_to_idx[target_name]] = 1.0
 
         # 4. Embed target text
         target_emb = embed_string(row["target_text"])

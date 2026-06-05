@@ -52,7 +52,10 @@ def collate_fn(batch):
     # Pad speaker_seqs
     # speaker_seqs: list of (N, num_speakers)
     max_n = max(s.shape[0] for s in speaker_seqs)
-    num_speakers = speaker_seqs[0].shape[1]
+    if speaker_seqs[0].ndim == 1:
+        num_speakers = 1
+    else:
+        num_speakers = speaker_seqs[0].shape[1]
 
     padded_speaker_seqs = []
     padded_dialogue_seqs = []
@@ -64,13 +67,21 @@ def collate_fn(batch):
 
         # Pad speaker sequence
         s_pad = torch.zeros((max_n, num_speakers))
-        s_pad[:n, :] = s
+        if s.ndim == 1:
+            s_pad[:n, 0] = s
+        else:
+            s_pad[:n, :] = s
         padded_speaker_seqs.append(s_pad)
 
         # Pad dialogue sequence
-        emb_dim = d.shape[1]
-        d_pad = torch.zeros((max_n, emb_dim))
-        d_pad[:n, :] = d
+        if d.ndim == 1:
+            emb_dim = 1
+            d_pad = torch.zeros((max_n, emb_dim))
+            d_pad[:n, 0] = d
+        else:
+            emb_dim = d.shape[1]
+            d_pad = torch.zeros((max_n, emb_dim))
+            d_pad[:n, :] = d
         padded_dialogue_seqs.append(d_pad)
 
     return {

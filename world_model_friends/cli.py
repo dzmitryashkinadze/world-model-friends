@@ -1,9 +1,12 @@
 import sys
 
 import click
+import polars as pl
 
 import world_model_friends.data_wrangling.io as io
 import world_model_friends.data_wrangling.script_sequencer as sequencer
+import world_model_friends.world_model.train as train
+from world_model_friends import config
 
 
 @click.group()
@@ -17,28 +20,28 @@ def cli():
     "--file",
     "-f",
     type=click.Path(exists=True),
-    default="data/Friends_script.csv",
+    default=config.get_config("process", "file"),
     help="Path to the CSV file.",
 )
 @click.option(
     "--num-sequences",
     "-n",
     type=int,
-    default=10,
+    default=config.get_config("process", "num_sequences"),
     help="Number of sequences to generate.",
 )
 @click.option(
     "--max-context-length",
     "-k",
     type=int,
-    default=5,
+    default=config.get_config("process", "max_context_length"),
     help="Maximum context length.",
 )
 @click.option(
     "--output",
     "-o",
     type=click.Path(),
-    default="data/processed_data.parquet",
+    default=config.get_config("process", "output"),
     help="Path to save the processed data.",
 )
 def compile_datasets(file, num_sequences, max_context_length, output):
@@ -71,6 +74,39 @@ def compile_datasets(file, num_sequences, max_context_length, output):
         click.echo(
             f"Successfully saved folds to: {train_output}, {test_output}, {val_output}"
         )
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command(name="train")
+@click.option(
+    "--train-file",
+    "-t",
+    type=click.Path(exists=True),
+    default=config.get_config("train", "train_file"),
+    help="Path to the training parquet file.",
+)
+@click.option(
+    "--val-file",
+    "-v",
+    type=click.Path(exists=True),
+    default=config.get_config("train", "val_file"),
+    help="Path to the validation parquet file.",
+)
+def train_world_model(train_file, val_file):
+    """Trains the world model using the provided parquet files."""
+    try:
+        click.echo(f"Loading training data from {train_file}")
+        train_df = pl.read_parquet(train_file)
+
+        click.echo(f"Loading validation data from {val_file}")
+        val_df = pl.read_parquet(val_file)
+
+        click.echo("Starting the model training...")
+        train.main(train_df, val_df)
+        click.echo("Training completed successfully.")
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)

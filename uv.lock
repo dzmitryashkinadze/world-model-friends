@@ -1110,6 +1110,7 @@ dependencies = [
     { name = "click" },
     { name = "numpy" },
     { name = "polars" },
+    { name = "pyyaml" },
     { name = "sentence-transformers" },
     { name = "torch" },
 ]
@@ -1127,6 +1128,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.4.1" },
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "polars", specifier = ">=1.41.2" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "sentence-transformers", specifier = ">=3.0.0" },
     { name = "torch", specifier = ">=2.4.0" },
 ]

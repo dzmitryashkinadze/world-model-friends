@@ -10,10 +10,12 @@ dependencies = [
     "polars>=1.41.2",
     "sentence-transformers>=3.0.0",
     "torch>=2.4.0",
+    "PyYaml>=6.0.3",
 ]
 
 [project.scripts]
 compile-datasets = "world_model_friends.cli:compile_datasets"
+train-world-model = "world_model_friends.cli:train_world_model"
 
 [dependency-groups]
 dev = [

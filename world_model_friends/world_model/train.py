@@ -58,6 +58,7 @@ def main(training_df, validation_df):
 
     train_ds = WorldModelDataset(training_df)
     val_ds = WorldModelDataset(validation_df)
+    print("Loaded datasets to pytorch.")
 
     # We need to know num_speakers and emb_dim.
     # Let's assume they are in the data.
@@ -70,6 +71,7 @@ def main(training_df, validation_df):
 
     # Let's use a sample from the dataset to get dimensions
     sample_item = train_ds[0]
+    print(sample_item)
     num_speakers = sample_item["target_speaker"].shape[0]
     emb_dim = sample_item["target_emb"].shape[0]
     # The sequence length N is not strictly needed for the model if it's dynamic,
@@ -96,8 +98,9 @@ def main(training_df, validation_df):
 
     for epoch in range(epochs):
         train_loss = train_one_epoch(model, train_loader, optimizer, criterion, device)
+        print("here3")
         val_loss = validate(model, val_loader, criterion, device)
-
+        print("here4")
         print(
             f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.6f} - "
             f"Val Loss: {val_loss:.6f}"
