@@ -1,8 +1,9 @@
 import random
 
 import polars as pl
+from tqdm import tqdm
 
-from world_model_friends.ai.embeddings import embed_string
+from world_model_friends.ai.embeddings import embed_batch, get_model
 from world_model_friends.config import get_config
 
 
@@ -21,11 +22,19 @@ def generate_sequences(
     results = []
     df_len = len(df)
 
+    # characters configuration
+    name_to_idx = {
+        name: i for i, name in enumerate(get_config("process", "main_characters"))
+    }
+    num_characters = len(get_config("process", "main_characters")) + 1
+
     # Convert columns to lists for faster access in the loop
     names = df["Name"].to_list()
     lines = df["Lines"].to_list()
 
-    for _ in range(num_sequences):
+    print()
+    print("Picking sequences:")
+    for _ in tqdm(range(num_sequences)):
         # Random context length cl from 1 to max_context_length
         cl = random.randint(1, max_context_length)
 
@@ -48,13 +57,14 @@ def generate_sequences(
         context_indices = range(i, i + cl)
 
         # 1. context_names: list of unique names
-        context_names_list = []
-        seen_names = set()
+        context_identity = [0.0] * num_characters
         for idx in context_indices:
             name = names[idx]
-            if name not in seen_names:
-                context_names_list.append(name)
-                seen_names.add(name)
+            idx = name_to_idx.get(name, -1)
+            if idx != -1:
+                context_identity[idx] = 1.0
+            else:
+                context_identity[-1] = 1.0
 
         # 2. context_text: "Name: Line\n"
         context_text_parts = []
@@ -62,17 +72,24 @@ def generate_sequences(
             context_text_parts.append(f"{names[idx]}: {lines[idx]}")
         context_text = "\n".join(context_text_parts)
 
-        # 3. target_name
+        # 3. target identity
         target_idx = i + cl
-        target_name = names[target_idx]
+        target_identity = [0.0] * num_characters
+        for idx in context_indices:
+            name = names[idx]
+            idx = name_to_idx.get(name, -1)
+            if idx != -1:
+                target_identity[idx] = 1.0
+            else:
+                target_identity[-1] = 1.0
 
         # 4. target_text
         target_text = lines[target_idx]
 
         results.append({
-            "context_names": context_names_list,
+            "context_identity": context_identity,
             "context_text": context_text,
-            "target_name": target_name,
+            "target_identity": target_identity,
             "target_text": target_text,
             "context_length": cl,
         })
@@ -83,48 +100,42 @@ def generate_sequences(
 def embed_sequences(sequences_df: pl.DataFrame) -> pl.DataFrame:
     """
     Transforms generated sequences into training data.
-    [1] context_names -> multi-hot vector
-    [2] context_text -> semantic embedding
-    [3] target_name -> one-hot vector
-    [4] target_text -> semantic embedding
+    [1] context_text -> semantic embedding
+    [2] target_text -> semantic embedding
     """
-    name_to_idx = {
-        name: i for i, name in enumerate(get_config("process", "main_characters"))
-    }
-    num_characters = len(get_config("process", "main_characters")) + 1
 
-    results = []
-    for row in sequences_df.iter_rows(named=True):
-        # 1. Multi-hot for context names
-        context_vec = [0.0] * num_characters
-        for name in row["context_names"]:
-            if name in name_to_idx:
-                context_vec[name_to_idx[name]] = 1.0
-            else:
-                context_vec[-1] = 1.0
+    # config
+    batch_size = get_config("embeddings", "batch_size")
 
-        # 2. Embed context text
-        context_emb = embed_string(row["context_text"])
+    # get embedding model
+    print()
+    print("Loading the embedding model:")
+    model = get_model()
 
-        # 3. One-hot for target name
-        target_vec = [0.0] * num_characters
-        target_name = row["target_name"]
-        if target_name in name_to_idx:
-            target_vec[name_to_idx[target_name]] = 1.0
-        else:
-            target_vec[-1] = 1.0
+    # 1. Batch embed all context and target texts
+    context_texts = sequences_df["context_text"].to_list()
+    target_texts = sequences_df["target_text"].to_list()
+    context_embeddings = []
+    target_embeddings = []
 
-        # 4. Embed target text
-        target_emb = embed_string(row["target_text"])
+    print()
+    print("Embedding context:")
+    for i in tqdm(range(0, len(context_texts), batch_size)):
+        context_embeddings += embed_batch(
+            model=model, texts=context_texts[i : i + batch_size]
+        )
+    for i in tqdm(range(0, len(target_texts), batch_size)):
+        target_embeddings += embed_batch(
+            model=model, texts=target_texts[i : i + batch_size]
+        )
 
-        results.append({
-            "context_identity": context_vec,
-            "context_embedding": context_emb,
-            "target_identity": target_vec,
-            "target_embedding": target_emb,
-        })
-
-    return pl.DataFrame(results)
+    # 3. Combine everything into a single DataFrame
+    return pl.DataFrame({
+        "context_identity": sequences_df["context_identity"],
+        "context_embedding": context_embeddings,
+        "target_identity": sequences_df["target_identity"],
+        "target_embedding": target_embeddings,
+    })
 
 
 def split_data(

@@ -12,7 +12,7 @@ from world_model_friends.data_wrangling.script_sequencer import (
 def test_generate_sequences():
     # Create a dummy dataframe
     data = {
-        "Name": ["Alice", "Bob", "Charlie", "Alice", "Bob"],
+        "Name": ["Ross", "Rachel", "Chandler", "Monica", "Joey"],
         "Lines": ["Hello", "Hi there", "How are you?", "I am good", "Fine thanks"],
     }
     df = pl.DataFrame(data)
@@ -27,9 +27,9 @@ def test_generate_sequences():
 
     # Check columns
     expected_columns = [
-        "context_names",
+        "context_identity",
         "context_text",
-        "target_name",
+        "target_identity",
         "target_text",
         "context_length",
     ]
@@ -37,7 +37,7 @@ def test_generate_sequences():
 
     # Check some content
     # Since it's random, we check that the columns are non-empty and types are okay
-    assert not sequences_df["context_names"].is_null().any()
+    assert not sequences_df["context_identity"].is_null().any()
     assert not sequences_df["target_text"].is_null().any()
     assert (sequences_df["context_length"] >= 1).all() and (
         sequences_df["context_length"] <= max_context_length
@@ -47,16 +47,16 @@ def test_generate_sequences():
 def test_prepare_training_data():
     # Mock embed_string to avoid heavy dependencies/actual model loading
     with patch(
-        "world_model_friends.data_wrangling.script_sequencer.embed_string"
+        "world_model_friends.data_wrangling.script_sequencer.embed_batch"
     ) as mock_embed:
         mock_emb_val = [0.1, 0.2, 0.3]
-        mock_embed.return_value = mock_emb_val
+        mock_embed.side_effect = lambda model, texts: [mock_emb_val] * len(texts)
 
         # Create dummy sequences_df
         data = {
-            "context_names": [["Ross", "Phoebe"], ["Rachel"]],
+            "context_identity": [[1.0, 0.0], [1.0, 0.0]],
             "context_text": ["Alice: Hello\nBob: Hi", "Alice: Hi"],
-            "target_name": ["Joey", "Chandler"],
+            "target_identity": [[1.0, 0.0], [1.0, 0.0]],
             "target_text": ["How are you?", "Fine"],
             "context_length": [2, 1],
         }
@@ -76,50 +76,6 @@ def test_prepare_training_data():
         # Check embeddings
         assert training_df["context_embedding"].to_list()[0] == mock_emb_val
         assert training_df["target_embedding"].to_list()[0] == mock_emb_val
-
-        # Check identities (Row 0)
-        # context_names ["Alice", "Bob"] -> [1.0, 1.0, 0.0]
-        # target_name "Charlie" -> [0.0, 0.0, 1.0]
-        assert training_df["context_identity"].to_list()[0] == [
-            1.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        ]
-        assert training_df["target_identity"].to_list()[0] == [
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-        ]
-
-        # Check identities (Row 1)
-        # context_names ["Alice"] -> [1.0, 0.0, 0.0]
-        # target_name "Bob" -> [0.0, 1.0, 0.0]
-        assert training_df["context_identity"].to_list()[1] == [
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        ]
-        assert training_df["target_identity"].to_list()[1] == [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-        ]
 
 
 def test_split_data():
