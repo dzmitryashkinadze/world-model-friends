@@ -60,32 +60,47 @@ def main(training_df, validation_df):
     emb_dim = sample_item["target_embedding"].shape[0]
 
     # define the model
-    model = WorldModel(
-        num_speakers=num_speakers,
-        emb_dim=emb_dim,
-    ).to(device)
+    model = WorldModel(num_speakers=num_speakers, emb_dim=emb_dim, dropout=0.2).to(
+        device
+    )
 
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
     criterion = nn.MSELoss()
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode="min", factor=0.5, patience=2
+    )
 
     train_loader = DataLoader(
         train_ds, batch_size=32, shuffle=True, collate_fn=collate_fn
     )
     val_loader = DataLoader(val_ds, batch_size=32, shuffle=False, collate_fn=collate_fn)
 
-    epochs = 10
+    epochs = 50  # Increased epochs to allow for early stopping
     best_val_loss = float("inf")
+    patience = 5
+    counter = 0
     print("Ready for training")
 
     for epoch in range(epochs):
         train_loss = train_one_epoch(model, train_loader, optimizer, criterion, device)
         val_loss = validate(model, val_loader, criterion, device)
+
+        # Step the scheduler
+        scheduler.step(val_loss)
+
         print(
             f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.6f} - "
-            f"Val Loss: {val_loss:.6f}"
+            f"Val Loss: {val_loss:.6f} - LR: {optimizer.param_groups[0]['lr']:.6f}"
         )
 
+        # Early Stopping and Model Saving logic
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            # In a real script, we would save the model here.
-            # torch.save(model.state_dict(), "best_model.pt")
+            counter = 0
+            torch.save(model.state_dict(), "best_model.pt")
+            print(f"  --> New best model saved (Val Loss: {best_val_loss:.6f})")
+        else:
+            counter += 1
+            if counter >= patience:
+                print(f"Early stopping triggered after {epoch + 1} epochs.")
+                break
