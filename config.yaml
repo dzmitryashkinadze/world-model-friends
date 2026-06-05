@@ -15,7 +15,18 @@ process:
 train:
   train_file: "data/processed_data_train.parquet"
   val_file: "data/processed_data_val.parquet"
+  num_heads: 4
+  dropout: 0.2
+  scheduler_mode: "min"
+  scheduler_factor: 0.5
+  scheduler_patience: 2
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  epochs: 50
+  patience: 5
 
 embeddings:
   model_name: "all-MiniLM-L6-v2"
+  dimension: 384
   batch_size: 256

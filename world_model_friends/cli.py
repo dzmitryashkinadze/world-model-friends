@@ -97,13 +97,8 @@ def compile_datasets(file, num_sequences, max_context_length, output):
 def train_world_model(train_file, val_file):
     """Trains the world model using the provided parquet files."""
     try:
-        click.echo(f"Loading training data from {train_file}")
         train_df = pl.read_parquet(train_file)
-
-        click.echo(f"Loading validation data from {val_file}")
         val_df = pl.read_parquet(val_file)
-
-        click.echo("Starting the model training...")
         train.main(train_df, val_df)
         click.echo("Training completed successfully.")
 

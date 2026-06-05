@@ -3,8 +3,9 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
+from world_model_friends.config import get_config
 from world_model_friends.world_model.dataset import WorldModelDataset, collate_fn
-from world_model_friends.world_model.model import WorldModel
+from world_model_friends.world_model.jepa import JEPAPredictor
 
 
 def train_one_epoch(model, dataloader, optimizer, criterion, device):
@@ -46,38 +47,68 @@ def validate(model, dataloader, criterion, device):
 
 
 def main(training_df, validation_df):
+    # config
+    num_heads = get_config("train", "num_heads")  # Make sure emb_dim % num_heads == 0
+    num_speakers = len(get_config("process", "main_characters")) + 1
+    emb_dim = get_config("embeddings", "dimension")
+    epochs = get_config("train", "epochs")
+    best_val_loss = float("inf")
+    patience = get_config("train", "patience")
+
+    # device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print()
     print(f"Using device: {device}")
 
     # convert the data to the pytorch format
     train_ds = WorldModelDataset(training_df)
     val_ds = WorldModelDataset(validation_df)
+    print()
     print("Loaded datasets to pytorch.")
 
-    # Let's use a sample from the dataset to get dimensions
-    sample_item = train_ds[0]
-    num_speakers = sample_item["target_identity"].shape[0]
-    emb_dim = sample_item["target_embedding"].shape[0]
-
     # define the model
-    model = WorldModel(num_speakers=num_speakers, emb_dim=emb_dim, dropout=0.2).to(
-        device
-    )
+    model = JEPAPredictor(
+        num_speakers=num_speakers,
+        emb_dim=emb_dim,
+        num_heads=num_heads,
+        dropout=get_config("train", "dropout"),
+    ).to(device)
+    print()
+    print("Loaded the model.")
 
-    optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+    optimizer = optim.Adam(
+        model.parameters(),
+        lr=get_config("train", "learning_rate"),
+        weight_decay=get_config("train", "weight_decay"),
+    )
+    print()
+    print("Defined the optimizer.")
+
     criterion = nn.MSELoss()
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.5, patience=2
+        optimizer,
+        mode=get_config("train", "scheduler_mode"),
+        factor=get_config("train", "scheduler_factor"),
+        patience=get_config("train", "scheduler_patience"),
     )
+    print()
+    print("Defined the scheduler.")
 
     train_loader = DataLoader(
-        train_ds, batch_size=32, shuffle=True, collate_fn=collate_fn
+        train_ds,
+        batch_size=get_config("train", "batch_size"),
+        shuffle=True,
+        collate_fn=collate_fn,
     )
-    val_loader = DataLoader(val_ds, batch_size=32, shuffle=False, collate_fn=collate_fn)
+    val_loader = DataLoader(
+        val_ds,
+        batch_size=get_config("train", "batch_size"),
+        shuffle=False,
+        collate_fn=collate_fn,
+    )
+    print()
+    print("Defined data loaders.")
 
-    epochs = 50  # Increased epochs to allow for early stopping
-    best_val_loss = float("inf")
-    patience = 5
     counter = 0
     print("Ready for training")
 
