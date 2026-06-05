@@ -4,6 +4,7 @@ import random
 import polars as pl
 
 from world_model_friends.ai.embeddings import embed_string
+from world_model_friends.config import get_config
 
 
 def generate_sequences(
@@ -80,7 +81,7 @@ def generate_sequences(
     return pl.DataFrame(results)
 
 
-def embed_sequences(sequences_df: pl.DataFrame, all_names: list[str]) -> pl.DataFrame:
+def embed_sequences(sequences_df: pl.DataFrame) -> pl.DataFrame:
     """
     Transforms generated sequences into training data.
     [1] context_names -> multi-hot vector
@@ -88,25 +89,31 @@ def embed_sequences(sequences_df: pl.DataFrame, all_names: list[str]) -> pl.Data
     [3] target_name -> one-hot vector
     [4] target_text -> semantic embedding
     """
-    name_to_idx = {name: i for i, name in enumerate(all_names)}
-    num_names = len(all_names)
+    name_to_idx = {
+        name: i for i, name in enumerate(get_config("process", "main_characters"))
+    }
+    num_characters = len(get_config("process", "main_characters")) + 1
 
     results = []
     for row in sequences_df.iter_rows(named=True):
         # 1. Multi-hot for context names
-        context_vec = [0.0] * num_names
+        context_vec = [0.0] * num_characters
         for name in row["context_names"]:
             if name in name_to_idx:
                 context_vec[name_to_idx[name]] = 1.0
+            else:
+                context_vec[-1] = 1.0
 
         # 2. Embed context text
         context_emb = embed_string(row["context_text"])
 
         # 3. One-hot for target name
-        target_vec = [0.0] * num_names
+        target_vec = [0.0] * num_characters
         target_name = row["target_name"]
         if target_name in name_to_idx:
             target_vec[name_to_idx[target_name]] = 1.0
+        else:
+            target_vec[-1] = 1.0
 
         # 4. Embed target text
         target_emb = embed_string(row["target_text"])

@@ -58,12 +58,11 @@ def compile_datasets(file, num_sequences, max_context_length, output):
         click.echo(f"Generated {len(sequences_df)} sequences.")
 
         # 3. Embed sequences
-        all_names = df["Name"].unique().to_list()
-        training_df = sequencer.embed_sequences(sequences_df, all_names)
+        sequences_df = sequencer.embed_sequences(sequences_df)
         click.echo("Embedded sequences.")
 
         # 4. Split into train, test, and val folds
-        train_df, val_df, test_df = sequencer.split_data(training_df)
+        train_df, val_df, test_df = sequencer.split_data(sequences_df)
         click.echo("Split training data into train, test, and val folds.")
 
         # 5. Store on disk

@@ -53,17 +53,16 @@ def test_prepare_training_data():
         mock_embed.return_value = mock_emb_val
 
         # Create dummy sequences_df
-        all_names = ["Alice", "Bob", "Charlie"]
         data = {
-            "context_names": [["Alice", "Bob"], ["Alice"]],
+            "context_names": [["Ross", "Phoebe"], ["Rachel"]],
             "context_text": ["Alice: Hello\nBob: Hi", "Alice: Hi"],
-            "target_name": ["Charlie", "Bob"],
+            "target_name": ["Joey", "Chandler"],
             "target_text": ["How are you?", "Fine"],
             "context_length": [2, 1],
         }
         sequences_df = pl.DataFrame(data)
 
-        training_df = embed_sequences(sequences_df, all_names)
+        training_df = embed_sequences(sequences_df)
 
         # Assertions
         assert len(training_df) == 2
@@ -81,14 +80,46 @@ def test_prepare_training_data():
         # Check identities (Row 0)
         # context_names ["Alice", "Bob"] -> [1.0, 1.0, 0.0]
         # target_name "Charlie" -> [0.0, 0.0, 1.0]
-        assert training_df["context_speaker_identity"].to_list()[0] == [1.0, 1.0, 0.0]
-        assert training_df["target_speaker_identity"].to_list()[0] == [0.0, 0.0, 1.0]
+        assert training_df["context_speaker_identity"].to_list()[0] == [
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
+        assert training_df["target_speaker_identity"].to_list()[0] == [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
 
         # Check identities (Row 1)
         # context_names ["Alice"] -> [1.0, 0.0, 0.0]
         # target_name "Bob" -> [0.0, 1.0, 0.0]
-        assert training_df["context_speaker_identity"].to_list()[1] == [1.0, 0.0, 0.0]
-        assert training_df["target_speaker_identity"].to_list()[1] == [0.0, 1.0, 0.0]
+        assert training_df["context_speaker_identity"].to_list()[1] == [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
+        assert training_df["target_speaker_identity"].to_list()[1] == [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+        ]
 
 
 def test_split_data():

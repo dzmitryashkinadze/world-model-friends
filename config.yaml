@@ -3,7 +3,18 @@ process:
   num_sequences: 10
   max_context_length: 5
   output: "data/processed_data.parquet"
+  main_characters: [
+    "Ross",
+    "Phoebe",
+    "Rachel",
+    "Joey",
+    "Chandler",
+    "Monica"
+  ]
 
 train:
   train_file: "data/processed_data_train.parquet"
   val_file: "data/processed_data_val.parquet"
+
+embeddings:
+  model_name: "all-MiniLM-L6-v2"
