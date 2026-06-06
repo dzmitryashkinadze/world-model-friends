@@ -1,7 +1,7 @@
 process:
   file: "data/Friends_script.csv"
-  num_sequences: 10_000
-  max_context_length: 5
+  num_sequences: 50_000
+  max_context_length: 10
   output: "data/processed_data.parquet"
   main_characters: [
     "Ross",
@@ -27,6 +27,6 @@ train:
   patience: 5
 
 embeddings:
-  model_name: "all-MiniLM-L6-v2"
-  dimension: 384
-  batch_size: 256
+  model_url: "http://localhost:8081"
+  dimension: 1024
+  batch_size: 10

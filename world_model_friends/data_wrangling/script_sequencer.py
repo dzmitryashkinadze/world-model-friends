@@ -3,8 +3,26 @@ import random
 import polars as pl
 from tqdm import tqdm
 
-from world_model_friends.ai.embeddings import embed_batch, get_model
+from world_model_friends.ai.embeddings import embed_batch
 from world_model_friends.config import get_config
+
+
+def process_split(
+    split_df: pl.DataFrame, split_name: str, n_sequences: int, max_context_length: int
+) -> pl.DataFrame:
+    """Process the dataframe split."""
+    print(f"Processing {split_name} split (target: {n_sequences} sequences)...")
+    if len(split_df) == 0 or n_sequences <= 0:
+        return None
+
+    # Generate sequences
+    seq_df = generate_sequences(split_df, n_sequences, max_context_length)
+    print(f"Generated {len(seq_df)} sequences for {split_name}.")
+
+    # Embed sequences
+    seq_df = embed_sequences(sequences_df=seq_df, split_name=split_name)
+    print(f"Embedded sequences for {split_name}.")
+    return seq_df
 
 
 def generate_sequences(
@@ -101,7 +119,7 @@ def generate_sequences(
     return pl.DataFrame(results)
 
 
-def embed_sequences(sequences_df: pl.DataFrame) -> pl.DataFrame:
+def embed_sequences(sequences_df: pl.DataFrame, split_name: str) -> pl.DataFrame:
     """
     Transforms generated sequences into training data.
     [1] context_text -> semantic embedding
@@ -114,61 +132,51 @@ def embed_sequences(sequences_df: pl.DataFrame) -> pl.DataFrame:
     # get embedding model
     print()
     print("Loading the embedding model:")
-    model = get_model()
 
     # 1. Batch embed all context and target texts
     context_texts = sequences_df["context_text"].to_list()
     target_texts = sequences_df["target_text"].to_list()
-    context_embeddings = []
-    target_embeddings = []
+    context_identities = sequences_df["context_identity"].to_list()
+    target_identities = sequences_df["target_identity"].to_list()
 
     print()
-    print("Embedding context:")
+    print("Embedding chunks:")
     for i in tqdm(range(0, len(context_texts), batch_size)):
-        context_embeddings += embed_batch(
-            model=model, texts=context_texts[i : i + batch_size]
-        )
+        context_embeddings = embed_batch(texts=context_texts[i : i + batch_size])
+        target_embeddings = embed_batch(texts=target_texts[i : i + batch_size])
 
-    print()
-    print("Embedding targets:")
-    for i in tqdm(range(0, len(target_texts), batch_size)):
-        target_embeddings += embed_batch(
-            model=model, texts=target_texts[i : i + batch_size]
-        )
-
-    # 3. Combine everything into a single DataFrame
-    return pl.DataFrame({
-        "context_identity": sequences_df["context_identity"],
-        "context_embedding": context_embeddings,
-        "target_identity": sequences_df["target_identity"],
-        "target_embedding": target_embeddings,
-    })
+        # store the chunk
+        pl.DataFrame({
+            "context_identity": context_identities[i : i + batch_size],
+            "context_embedding": context_embeddings,
+            "target_identity": target_identities[i : i + batch_size],
+            "target_embedding": target_embeddings,
+        }).write_parquet(f"data/{split_name}_{i}.parquet")
 
 
-def split_data(
-    df: pl.DataFrame, train_ratio: float = 0.7, val_ratio: float = 0.15
+def split_raw_data(
+    df: pl.DataFrame, test_ratio: float = 0.1, val_ratio: float = 0.1
 ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     """
-    Splits the DataFrame into train, test, and validation sets.
+    Splits the DataFrame into test, validation, and training sets sequentially.
 
     df: Polars DataFrame to split
-    train_ratio: Proportion of data for training
+    test_ratio: Proportion of data for testing
     val_ratio: Proportion of data for validation
-    (test_ratio will be 1 - train_ratio - val_ratio)
+    (train_ratio will be 1 - test_ratio - val_ratio)
     """
-    # Shuffle the data
-    df_shuffled = df.sample(fraction=1.0, shuffle=True)
+    n = len(df)
+    test_end = int(n * test_ratio)
+    val_end = int(n * (test_ratio + val_ratio))
 
-    n = len(df_shuffled)
-    train_end = int(n * train_ratio)
-    val_end = int(n * (train_ratio + val_ratio))
+    test_df = df.slice(0, test_end)
+    val_df = df.slice(test_end, val_end - test_end)
+    train_df = df.slice(val_end, n - val_end)
 
-    train_df = df_shuffled.slice(0, train_end)
-    val_df = df_shuffled.slice(train_end, val_end - train_end)
-    test_df = df_shuffled.slice(val_end, n - val_end)
     print()
-    print(f"Written {train_df.height} training samples")
-    print(f"Written {val_df.height} validation samples")
-    print(f"Written {test_df.height} testing samples")
+    print("Split raw data sequentially:")
+    print(f"Test={test_df.height}")
+    print(f"Val={val_df.height}")
+    print(f"Train={train_df.height}")
 
-    return train_df, val_df, test_df
+    return test_df, val_df, train_df

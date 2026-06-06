@@ -7,10 +7,10 @@ requires-python = ">=3.14"
 dependencies = [
     "click>=8.4.1",
     "polars>=1.41.2",
-    "sentence-transformers>=3.0.0",
     "torch>=2.4.0",
     "PyYaml>=6.0.3",
     "tqdm>=4.67.3",
+    "requests>=2.34.2",
 ]
 
 [project.scripts]
