@@ -19,7 +19,7 @@ embeddings:
 train:
   train_file: "data/train_*.parquet"
   val_file: "data/val_*.parquet"
-  max_files: 10
+  max_files: 10_000
   num_heads: 4
   dropout: 0.2
   scheduler_mode: "min"

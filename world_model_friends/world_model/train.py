@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from world_model_friends.config import get_config
 from world_model_friends.world_model.dataset import WorldModelDataset, collate_fn
@@ -22,6 +23,7 @@ def train_one_epoch(
     optimizer: optim.Optimizer,
     criterion: nn.Module,
     device: torch.device,
+    val_loader: DataLoader,
 ) -> float:
     """
     Trains the model for one epoch.
@@ -33,15 +35,19 @@ def train_one_epoch(
         criterion (nn.Module): The loss function.
         device (torch.device): The device to run the training
             on (e.g., 'cuda' or 'cpu').
+        val_loader (DataLoader): Validation data loader.
 
     Returns:
         float: The average loss for the epoch.
     """
     model.train()
     total_loss = 0
-    for batch in dataloader:
+    step = 0
+    print("Training tqdm")
+    for batch in tqdm(dataloader):
         optimizer.zero_grad()
 
+        step += 1
         context_identity = batch["context_identity"].to(device)
         context_embedding = batch["context_embedding"].to(device)
         target_identity = batch["target_identity"].to(device)
@@ -56,6 +62,16 @@ def train_one_epoch(
         optimizer.step()
 
         total_loss += loss.item()
+
+        if step % 100 == 0:
+            print(f"Running training loss: {total_loss / step}")
+
+        if step < 10_000 and step % 1000 == 0:
+            val_loss = validate(
+                model=model, dataloader=val_loader, criterion=criterion, device=device
+            )
+            print(f"Running validation loss: {val_loss:.6f}")
+
     return total_loss / len(dataloader)
 
 
@@ -77,7 +93,8 @@ def validate(
     model.eval()
     total_loss = 0
     with torch.no_grad():
-        for batch in dataloader:
+        print("Validation tqdm")
+        for batch in tqdm(dataloader):
             context_identity = batch["context_identity"].to(device)
             context_embedding = batch["context_embedding"].to(device)
             target_identity = batch["target_identity"].to(device)
@@ -165,12 +182,15 @@ def main(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
     print("Ready for training")
 
     for epoch in range(epochs):
+        print()
+        print(f"Strarted training epoch {epoch}")
         train_loss = train_one_epoch(
             model=model,
             dataloader=train_loader,
             optimizer=optimizer,
             criterion=criterion,
             device=device,
+            val_loader=val_loader,
         )
         val_loss = validate(
             model=model, dataloader=val_loader, criterion=criterion, device=device
