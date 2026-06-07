@@ -1,3 +1,9 @@
+"""
+CLI tool for World Model Friends.
+
+Provides commands for processing raw data into datasets and training the world model.
+"""
+
 import sys
 
 import click
@@ -10,17 +16,17 @@ from world_model_friends import config
 
 
 @click.group()
-def cli():
+def cli() -> None:
     """World Model Friends CLI tool."""
     pass
 
 
 @cli.command(name="process")
 @click.option(
-    "--file",
+    "--raw_data_file_path",
     "-f",
     type=click.Path(exists=True),
-    default=config.get_config("process", "file"),
+    default=config.get_config("process", "file_path"),
     help="Path to the CSV file.",
 )
 @click.option(
@@ -57,23 +63,43 @@ def cli():
     help="Path to save the processed data.",
 )
 def compile_datasets(
-    file, num_sequences, max_context_length, test_ratio, val_ratio, output
-):
-    """Reads CSV, splits sequentially, generates, embeds and stores on disk."""
+    raw_data_file_path: str,
+    num_sequences: int,
+    max_context_length: int,
+    test_ratio: float,
+    val_ratio: float,
+    output: str,
+) -> None:
+    """
+    Reads CSV, splits sequentially, generates, embeds and stores on disk.
+
+    Args:
+        raw_data_file_path (str): Path to the CSV file.
+        num_sequences (int): Number of sequences to generate over all splits.
+        max_context_length (int): Maximum context length.
+        test_ratio (float): Proportion of raw data for testing.
+        val_ratio (float): Proportion of raw data for validation.
+        output (str): Path to save the processed data.
+
+    Returns:
+        None
+    """
     try:
         # 1. Load CSV
-        df = io.load_csv_to_polars(file)
-        click.echo(f"Successfully loaded {file}")
+        df = io.load_csv_to_polars(raw_data_file_path=raw_data_file_path)
+        click.echo(f"Successfully loaded {raw_data_file_path}")
 
         # 2. Split raw data sequentially
-        test_df, val_df, train_df = sequencer.split_raw_data(df, test_ratio, val_ratio)
+        test_df, val_df, train_df = sequencer.split_raw_data(
+            df=df, test_ratio=test_ratio, val_ratio=val_ratio
+        )
 
-        # 3. Generate, Embed and Store for each split
         # Distribute the total num_sequences across the splits proportionally
         n_test = int(num_sequences * test_ratio)
         n_val = int(num_sequences * val_ratio)
         n_train = num_sequences - n_test - n_val
 
+        # 3. Generate, Embed and Store for each split
         # processing
         test_df = sequencer.process_split(
             split_df=test_df,
@@ -92,16 +118,6 @@ def compile_datasets(
             split_name="train",
             n_sequences=n_train,
             max_context_length=max_context_length,
-        )
-
-        # 4. Save folds
-        t_df = test_df if test_df is not None else pl.DataFrame()
-        v_df = val_df if val_df is not None else pl.DataFrame()
-        tr_df = train_df if train_df is not None else pl.DataFrame()
-        train_output, test_output, val_output = io.save_folds(tr_df, t_df, v_df, output)
-
-        click.echo(
-            f"Successfully saved folds to: {train_output}, {test_output}, {val_output}"
         )
 
     except Exception as e:
@@ -124,8 +140,17 @@ def compile_datasets(
     default=config.get_config("train", "val_file"),
     help="Path to the validation parquet file.",
 )
-def train_world_model(train_file, val_file):
-    """Trains the world model using the provided parquet files."""
+def train_world_model(train_file: str, val_file: str) -> None:
+    """
+    Trains the world model using the provided parquet files.
+
+    Args:
+        train_file (str): Path to the training parquet file.
+        val_file (str): Path to the validation parquet file.
+
+    Returns:
+        None
+    """
     try:
         train_df = pl.read_parquet(train_file)
         val_df = pl.read_parquet(val_file)

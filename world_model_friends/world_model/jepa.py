@@ -1,3 +1,11 @@
+"""
+JEPA Predictor module.
+
+This module implements a JEPA-inspired Transformer predictor that operates
+in a latent space, using discrete conditioning variables and continuous
+embeddings to predict future latent states.
+"""
+
 import torch
 import torch.nn as nn
 
@@ -20,6 +28,17 @@ class JEPAPredictor(nn.Module):
         num_layers: int = 2,
         dropout: float = 0.1,
     ):
+        """
+        Initializes the JEPAPredictor.
+
+        Args:
+            num_speakers (int): Number of possible speakers (for identity projection).
+            emb_dim (int): Dimensionality of the latent embedding space.
+            num_heads (int, optional): Number of attention heads in the Transformer.
+                Defaults to 4.
+            num_layers (int, optional): Number of Transformer layers. Defaults to 2.
+            dropout (float, optional): Dropout probability. Defaults to 0.1.
+        """
         super().__init__()
         self.emb_dim = emb_dim
 
@@ -56,12 +75,17 @@ class JEPAPredictor(nn.Module):
         target_identity: torch.Tensor,
     ) -> torch.Tensor:
         """
-        Inputs:
-            context_identities: (B, num_speakers) - Multi-hot
-            context_embedding: (B, emb_dim) - Continuous latent state
-            target_identity: (B, num_speakers) - One-hot
+        Performs a forward pass through the predictor.
+
+        Args:
+            context_identities (torch.Tensor): Multi-hot tensor
+                of shape (B, num_speakers).
+            context_embedding (torch.Tensor): Continuous latent state tensor
+                of shape (B, emb_dim).
+            target_identity (torch.Tensor): One-hot tensor of shape (B, num_speakers).
+
         Returns:
-            target_embedding: (B, emb_dim) - Predicted next latent state
+            torch.Tensor: Predicted next latent state embedding of shape (B, emb_dim).
         """
         batch_size = context_embedding.size(0)
 

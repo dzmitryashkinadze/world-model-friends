@@ -1,24 +1,28 @@
+"""
+Module for handling input/output operations of data files.
+"""
+
 import os
 
 import polars as pl
 
 
-def load_csv_to_polars(file_path: str) -> pl.DataFrame:
+def load_csv_to_polars(raw_data_file_path: str) -> pl.DataFrame:
     """
     Loads a CSV file into a Polars DataFrame.
 
     Args:
-        file_path (str): Path to the CSV file.
+        raw_data_file_path (str): Path to the CSV file.
 
     Returns:
         pl.DataFrame: The loaded DataFrame.
     """
-    return pl.read_csv(file_path)
+    return pl.read_csv(raw_data_file_path)
 
 
 def save_folds(
     train_df: pl.DataFrame, test_df: pl.DataFrame, val_df: pl.DataFrame, output: str
-):
+) -> tuple[str, str, str]:
     """
     Saves training, testing, and validation folds as parquet files.
 
@@ -29,7 +33,8 @@ def save_folds(
         output (str): The base output path.
 
     Returns:
-        tuple: (train_output, test_output, val_output)
+        tuple[str, str, str]: A tuple containing
+            (train_output, test_output, val_output).
     """
     base, ext = os.path.splitext(output)
     train_output = f"{base}_train{ext}"

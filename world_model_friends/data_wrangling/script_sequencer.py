@@ -1,3 +1,7 @@
+"""
+Module for processing and sequencing data for training.
+"""
+
 import random
 
 import polars as pl
@@ -9,8 +13,20 @@ from world_model_friends.config import get_config
 
 def process_split(
     split_df: pl.DataFrame, split_name: str, n_sequences: int, max_context_length: int
-) -> pl.DataFrame:
-    """Process the dataframe split."""
+) -> pl.DataFrame | None:
+    """
+    Process a dataframe split by generating sequences and embedding them.
+
+    Args:
+        split_df (pl.DataFrame): The dataframe split to process.
+        split_name (str): Name of the split (e.g., 'train', 'test').
+        n_sequences (int): Number of sequences to generate.
+        max_context_length (int): Maximum context length for sequences.
+
+    Returns:
+        pl.DataFrame | None: The processed DataFrame containing embeddings,
+            or None if input is invalid.
+    """
     print(f"Processing {split_name} split (target: {n_sequences} sequences)...")
     if len(split_df) == 0 or n_sequences <= 0:
         return None
@@ -29,13 +45,17 @@ def generate_sequences(
     df: pl.DataFrame, num_sequences: int, max_context_length: int
 ) -> pl.DataFrame:
     """
-    Generates sequences of turns.
+    Generates sequences of turns from a dataframe.
     Each sequence has a random length (1 to max_context_length) for context,
     and the next turn as the target.
 
-    df: Polars DataFrame with columns 'Name' and 'Lines'
-    num_sequences: Number of sequences to generate
-    max_context_length: Max length of context
+    Args:
+        df (pl.DataFrame): Polars DataFrame with columns 'Name' and 'Lines'.
+        num_sequences (int): Number of sequences to generate.
+        max_context_length (int): Max length of context.
+
+    Returns:
+        pl.DataFrame: A DataFrame containing the generated sequences and their metadata.
     """
     results = []
 
@@ -119,11 +139,16 @@ def generate_sequences(
     return pl.DataFrame(results)
 
 
-def embed_sequences(sequences_df: pl.DataFrame, split_name: str) -> pl.DataFrame:
+def embed_sequences(sequences_df: pl.DataFrame, split_name: str) -> None:
     """
-    Transforms generated sequences into training data.
-    [1] context_text -> semantic embedding
-    [2] target_text -> semantic embedding
+    Transforms generated sequences into training data by creating semantic embeddings.
+
+    Args:
+        sequences_df (pl.DataFrame): The generated sequences DataFrame.
+        split_name (str): Name of the split for output filenames.
+
+    Returns:
+        None: This function writes parquet files to the 'data/' directory.
     """
 
     # config
@@ -160,10 +185,14 @@ def split_raw_data(
     """
     Splits the DataFrame into test, validation, and training sets sequentially.
 
-    df: Polars DataFrame to split
-    test_ratio: Proportion of data for testing
-    val_ratio: Proportion of data for validation
-    (train_ratio will be 1 - test_ratio - val_ratio)
+    Args:
+        df (pl.DataFrame): The Polars DataFrame to split.
+        test_ratio (float): Proportion of data for testing. Defaults to 0.1.
+        val_ratio (float): Proportion of data for validation. Defaults to 0.1.
+
+    Returns:
+        tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+            A tuple of (test_df, val_df, train_df).
     """
     n = len(df)
     test_end = int(n * test_ratio)

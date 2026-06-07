@@ -1,5 +1,5 @@
 process:
-  file: "data/Friends_script.csv"
+  raw_data_file_path: "data/Friends_script.csv"
   num_sequences: 50_000
   max_context_length: 10
   output: "data/processed_data.parquet"
@@ -13,8 +13,8 @@ process:
   ]
 
 train:
-  train_file: "data/processed_data_train.parquet"
-  val_file: "data/processed_data_val.parquet"
+  train_file: "data/train_*.parquet"
+  val_file: "data/val_*.parquet"
   num_heads: 4
   dropout: 0.2
   scheduler_mode: "min"
@@ -28,5 +28,5 @@ train:
 
 embeddings:
   model_url: "http://localhost:8081"
-  dimension: 1024
+  dimension: 4096
   batch_size: 10
