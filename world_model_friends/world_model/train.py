@@ -42,6 +42,7 @@ def train_one_epoch(
     """
     model.train()
     total_loss = 0
+    last_100_loss = 0
     step = 0
     print("Training tqdm")
     for batch in tqdm(dataloader):
@@ -61,16 +62,20 @@ def train_one_epoch(
         loss.backward()
         optimizer.step()
 
-        total_loss += loss.item()
+        loss_value = loss.item()
+        total_loss += loss_value
+        last_100_loss += loss_value
 
         if step % 100 == 0:
-            print(f"Running training loss: {total_loss / step}")
+            print(f"Running training loss: {last_100_loss / 100}")
+            last_100_loss = 0
 
-        if step < 10_000 and step % 1000 == 0:
+        if step < 10_000 and step % 2000 == 0:
             val_loss = validate(
                 model=model, dataloader=val_loader, criterion=criterion, device=device
             )
             print(f"Running validation loss: {val_loss:.6f}")
+            model.train()
 
     return total_loss / len(dataloader)
 
