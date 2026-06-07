@@ -7,7 +7,6 @@ Provides commands for processing raw data into datasets and training the world m
 import sys
 
 import click
-import polars as pl
 
 import world_model_friends.data_wrangling.io as io
 import world_model_friends.data_wrangling.script_sequencer as sequencer
@@ -55,20 +54,12 @@ def cli() -> None:
     default=0.1,
     help="Proportion of raw data for validation.",
 )
-@click.option(
-    "--output",
-    "-o",
-    type=click.Path(),
-    default=config.get_config("process", "output"),
-    help="Path to save the processed data.",
-)
 def compile_datasets(
     raw_data_file_path: str,
     num_sequences: int,
     max_context_length: int,
     test_ratio: float,
     val_ratio: float,
-    output: str,
 ) -> None:
     """
     Reads CSV, splits sequentially, generates, embeds and stores on disk.
@@ -129,31 +120,40 @@ def compile_datasets(
 @click.option(
     "--train-file",
     "-t",
-    type=click.Path(exists=True),
+    type=click.Path(),
     default=config.get_config("train", "train_file"),
     help="Path to the training parquet file.",
 )
 @click.option(
     "--val-file",
     "-v",
-    type=click.Path(exists=True),
+    type=click.Path(),
     default=config.get_config("train", "val_file"),
     help="Path to the validation parquet file.",
 )
-def train_world_model(train_file: str, val_file: str) -> None:
+@click.option(
+    "--max-files",
+    "-m",
+    type=int,
+    default=config.get_config("train", "max_files"),
+    help="Limit the number of files to read.",
+)
+def train_world_model(train_file: str, val_file: str, max_files: int) -> None:
     """
     Trains the world model using the provided parquet files.
 
     Args:
         train_file (str): Path to the training parquet file.
         val_file (str): Path to the validation parquet file.
+        max_files (int): Limit the number of files to read.
 
     Returns:
         None
     """
     try:
-        train_df = pl.read_parquet(train_file)
-        val_df = pl.read_parquet(val_file)
+        train_df = io.load_parquet_files(train_file, max_files)
+        val_df = io.load_parquet_files(val_file, max_files)
+
         train.main(train_df, val_df)
         click.echo("Training completed successfully.")
 

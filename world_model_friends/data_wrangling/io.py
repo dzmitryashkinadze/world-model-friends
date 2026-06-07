@@ -2,6 +2,7 @@
 Module for handling input/output operations of data files.
 """
 
+import glob
 import os
 
 import polars as pl
@@ -18,6 +19,25 @@ def load_csv_to_polars(raw_data_file_path: str) -> pl.DataFrame:
         pl.DataFrame: The loaded DataFrame.
     """
     return pl.read_csv(raw_data_file_path)
+
+
+def load_parquet_files(pattern: str, limit: int = None) -> pl.DataFrame:
+    """
+    Loads parquet files matching a pattern into a Polars DataFrame.
+
+    Args:
+        pattern (str): Glob pattern for parquet files.
+        limit (int, optional): Maximum number of files to read.
+
+    Returns:
+        pl.DataFrame: The loaded DataFrame.
+    """
+    files = sorted(glob.glob(pattern))
+    if limit is not None and limit > 0:
+        files = files[:limit]
+    if not files:
+        raise ValueError(f"No files found for pattern: {pattern}")
+    return pl.read_parquet(files)
 
 
 def save_folds(
