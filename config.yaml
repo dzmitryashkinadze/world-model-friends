@@ -20,15 +20,16 @@ train:
   train_file: "data/train_*.parquet"
   val_file: "data/val_*.parquet"
   max_files: 10_000
+  num_layers: 2
+  batch_size: 4
   num_heads: 4
   dropout: 0.2
   scheduler_mode: "min"
   scheduler_factor: 0.5
   scheduler_patience: 2
-  batch_size: 4
   learning_rate: 0.001
   weight_decay: 0.00001
   epochs: 50
   patience: 5
-
+  
 

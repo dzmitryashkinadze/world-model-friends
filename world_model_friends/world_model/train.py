@@ -126,6 +126,7 @@ def main(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
     num_speakers = len(get_config("process", "main_characters")) + 1
     emb_dim = get_config("embeddings", "dimension")
     epochs = get_config("train", "epochs")
+    num_layers = get_config("train", "num_layers", default=2)
     best_val_loss = float("inf")
     patience = get_config("train", "patience")
 
@@ -145,12 +146,13 @@ def main(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
         num_speakers=num_speakers,
         emb_dim=emb_dim,
         num_heads=num_heads,
+        num_layers=num_layers,
         dropout=get_config("train", "dropout"),
     ).to(device)
     print()
     print("Loaded the model.")
 
-    optimizer = optim.Adam(
+    optimizer = optim.AdamW(
         params=model.parameters(),
         lr=get_config("train", "learning_rate"),
         weight_decay=get_config("train", "weight_decay"),
@@ -158,7 +160,7 @@ def main(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
     print()
     print("Defined the optimizer.")
 
-    criterion = nn.MSELoss()
+    criterion = nn.HuberLoss()
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer=optimizer,
         mode=get_config("train", "scheduler_mode"),
