@@ -31,5 +31,6 @@ train:
   weight_decay: 0.00001
   epochs: 50
   patience: 5
+  running_train_loss_steps: 100
   
 
