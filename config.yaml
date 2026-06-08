@@ -21,10 +21,10 @@ train:
   val_file: "data/val_*.parquet"
   test_file: "data/test_*.parquet"
   max_files: 10_000
-  num_layers: 2
+  num_layers: 4
   batch_size: 4
   num_heads: 4
-  dropout: 0.2
+  dropout: 0.05
   scheduler_mode: "min"
   scheduler_factor: 0.5
   scheduler_patience: 2
