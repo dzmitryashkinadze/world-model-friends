@@ -2,6 +2,7 @@ import polars as pl
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from world_model_friends.config import get_config
 from world_model_friends.world_model.dataset import WorldModelDataset, collate_fn
@@ -12,7 +13,7 @@ def evaluate(
     model_path: str,
     test_df: pl.DataFrame,
     device: torch.device,
-) -> float:
+) -> None:
     """
     Evaluates a trained model on a given dataset.
 
@@ -56,20 +57,27 @@ def evaluate(
     )
 
     # 5. Evaluate
-    criterion = nn.HuberLoss()
-    total_loss = 0
+    criterion_huber = nn.HuberLoss()
+    criterion_mse = nn.MSELoss()
+    total_loss_huber = 0
+    total_loss_mse = 0
     print("Starting evaluation...")
     with torch.no_grad():
-        for batch in val_loader:
+        print()
+        print("TQDM test batches:")
+        for batch in tqdm(val_loader):
             context_identity = batch["context_identity"].to(device)
             context_embedding = batch["context_embedding"].to(device)
             target_identity = batch["target_identity"].to(device)
             target_embedding = batch["target_embedding"].to(device)
 
             preds = model(context_identity, context_embedding, target_identity)
-            loss = criterion(preds, target_embedding)
-            total_loss += loss.item()
+            loss_huber = criterion_huber(preds, target_embedding)
+            loss_mse = criterion_mse(preds, target_embedding)
+            total_loss_huber += loss_huber.item()
+            total_loss_mse += loss_mse.item()
 
-    avg_loss = total_loss / len(val_loader)
-    print(f"Evaluation completed. Average loss: {avg_loss:.6f}")
-    return avg_loss
+    avg_loss_huber = total_loss_huber / len(val_loader)
+    avg_loss_mse = total_loss_mse / len(val_loader)
+    print(f"Evaluation completed. Average Huber loss: {avg_loss_huber:.6f}")
+    print(f"Evaluation completed. Average MSE loss: {avg_loss_mse:.6f}")
