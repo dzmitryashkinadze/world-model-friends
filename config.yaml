@@ -19,6 +19,7 @@ embeddings:
 train:
   train_file: "data/train_*.parquet"
   val_file: "data/val_*.parquet"
+  test_file: "data/test_*.parquet"
   max_files: 10_000
   num_layers: 2
   batch_size: 4

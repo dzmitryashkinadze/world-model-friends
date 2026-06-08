@@ -10,6 +10,7 @@ import click
 
 import world_model_friends.data_wrangling.io as io
 import world_model_friends.data_wrangling.script_sequencer as sequencer
+import world_model_friends.world_model.evaluate as evaluate
 import world_model_friends.world_model.train as train
 from world_model_friends import config
 
@@ -156,6 +157,53 @@ def train_world_model(train_file: str, val_file: str, max_files: int) -> None:
 
         train.main(train_df, val_df)
         click.echo("Training completed successfully.")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command(name="evaluate")
+@click.option(
+    "--model-path",
+    "-m",
+    type=click.Path(exists=True),
+    required=True,
+    help="Path to the model artifact (.pt).",
+)
+@click.option(
+    "--test-file",
+    "-v",
+    type=click.Path(),
+    default=config.get_config("train", "test_file"),
+    help="Path to the test parquet files.",
+)
+@click.option(
+    "--max-files",
+    "-f",
+    type=int,
+    default=config.get_config("train", "max_files"),
+    help="Limit the number of files to read.",
+)
+def evaluate_model(model_path: str, test_file: str, max_files: int) -> None:
+    """
+    Evaluates a trained world model artifact.
+
+    Args:
+        model_path (str): Path to the model artifact (.pt).
+        test_file (str): Path to the test parquet files.
+        max_files (int): Limit the number of files to read.
+
+    Returns:
+        None
+    """
+    try:
+        import torch
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        test_df = io.load_parquet_files(test_file, max_files)
+        evaluate.evaluate(model_path, test_df, device)
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
