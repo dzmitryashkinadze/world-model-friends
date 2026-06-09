@@ -2,6 +2,7 @@
 - ASK QUESTIONS WHEN UNSURE
 - ASK QUESTIONS WHEN DOING SOMETHING POTENTIALLY DANGEROUS
 - ASK QUESTIONS WHEN DOING IMPORTANT TECH DECISIONS NOT SPECIFIED BY THE USER
+- DO NOT LIST FILES IN data/ using `ls -R` as it has 5k files inside and it basically will flood your context
 
 ## Conversational Style
 - Keep answers short and concise, no emojis, no fluff, technical prose only, be direct

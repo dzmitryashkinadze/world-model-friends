@@ -14,11 +14,12 @@ The system is implemented as a **Click-based CLI**, providing a modular workflow
 ### Core Components
 1. **Data Loader & Sequencer**: Processes raw CSV data into sliding window sequences.
 2. **Embedding Engine**: Generates hybrid embeddings (semantic for the dialogue + one hot for the identity of those involved in the dialogue).
-3. **SQLite Storage**: A persistent database used to store and index the generated embeddings, facilitating efficient training and retrieval.
-4. **World Model (Deep Learning)**: A transition model trained to predict the next latent state (upcoming in development).
-### CLI Workflow (Planned)
-* `create_datasets`: Load CSV, generate sequences, and store embeddings in SQLite.
+3. **Parquet Storage**: A persistent storage method used to store and index the generated embeddings via Parquet files, facilitating efficient training and retrieval.
+4. **World Model (JEPA-inspired Transformer)**: A transition model implemented as a JEPA-inspired Transformer to predict the next latent state.
+### CLI Workflow
+* `process`: Load CSV, generate sequences, and store embeddings in Parquet files.
 * `train`: Train the latent transition model.
+* `evaluate`: Evaluate a trained model artifact.
 
 ### Data
 The project is based on the following Kaggle dataset (to be placed in data directory):
@@ -46,12 +47,12 @@ Trains a predictor model that maps a sequence of context to the next semantic st
     2. **Dialogue Sequence:** A sequence of semantic embeddings for the dialogue turns.
     3. **Target Speaker:** A one-hot vector representing the identity of the speaker in the next turn.
 * **Output:** The semantic embedding of the next dialogue turn (the "answer").
-* **Architecture:** A transition model (e.g., an MLP or a small Transformer) that processes these inputs to predict the next semantic state.
+* **Architecture:** A JEPA-inspired Transformer that processes these inputs to predict the next semantic state.
 
 ### 4. Output Interpretation
 * **Goal:** Convert abstract latent predictions into human-readable dialogue to make the model's output user-friendly.
 * **Method:**
-    1. **Targeted Search**: Take the predicted semantic embedding and perform a cosine similarity search in the SQLite database.
+    1. **Targeted Search**: Take the predicted semantic embedding and perform a cosine similarity search in the stored data files.
     2. **Character Filtering**: Restrict the search space to dialogue turns belonging to the predicted `Target Speaker`.
     3. **Nearest Neighbor Projection**: Return the text of the most similar dialogue turn (the one with the highest cosine similarity) to represent the model's predicted next state.
 
