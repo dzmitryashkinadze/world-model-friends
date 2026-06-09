@@ -14,9 +14,9 @@ dependencies = [
 ]
 
 [project.scripts]
-compile-datasets = "world_model_friends.cli:compile_datasets"
-train-world-model = "world_model_friends.cli:train_world_model"
-evaluate-model = "world_model_friends.cli:evaluate_model"
+compile-datasets = "world_model_friends.cli:run_compile_datasets"
+train-world-model = "world_model_friends.cli:run_train_world_model"
+evaluate-model = "world_model_friends.cli:run_evaluate_world_model"
 
 [dependency-groups]
 dev = [

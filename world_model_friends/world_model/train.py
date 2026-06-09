@@ -111,7 +111,7 @@ def validate(
     return total_loss / len(dataloader)
 
 
-def main(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
+def train_world_model(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
     """
     Main training entry point.
 

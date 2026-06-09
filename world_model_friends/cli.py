@@ -8,11 +8,11 @@ import sys
 
 import click
 
-import world_model_friends.world_model.evaluate as evaluate
-import world_model_friends.world_model.train as train
 from world_model_friends import config
 from world_model_friends.data_wrangling.compile_datasets import compile_datasets
 from world_model_friends.data_wrangling.io import load_parquet_files
+from world_model_friends.world_model.evaluate import evaluate_world_model
+from world_model_friends.world_model.train import train_world_model
 
 
 @click.group()
@@ -115,7 +115,7 @@ def run_compile_datasets(
     default=config.get_config("train", "max_files"),
     help="Limit the number of files to read.",
 )
-def train_world_model(train_file: str, val_file: str, max_files: int) -> None:
+def run_train_world_model(train_file: str, val_file: str, max_files: int) -> None:
     """
     Trains the world model using the provided parquet files.
 
@@ -131,7 +131,7 @@ def train_world_model(train_file: str, val_file: str, max_files: int) -> None:
         train_df = load_parquet_files(train_file, max_files)
         val_df = load_parquet_files(val_file, max_files)
 
-        train.main(train_df, val_df)
+        train_world_model(train_df=train_df, val_df=val_df)
         click.echo("Training completed successfully.")
 
     except Exception as e:
@@ -161,7 +161,7 @@ def train_world_model(train_file: str, val_file: str, max_files: int) -> None:
     default=config.get_config("train", "max_files"),
     help="Limit the number of files to read.",
 )
-def evaluate_model(model_path: str, test_file: str, max_files: int) -> None:
+def run_evaluate_world_model(model_path: str, test_file: str, max_files: int) -> None:
     """
     Evaluates a trained world model artifact.
 
@@ -179,7 +179,7 @@ def evaluate_model(model_path: str, test_file: str, max_files: int) -> None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         test_df = load_parquet_files(test_file, max_files)
-        evaluate.evaluate(model_path, test_df, device)
+        evaluate_world_model(model_path, test_df, device)
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)

@@ -9,7 +9,7 @@ from world_model_friends.world_model.dataset import WorldModelDataset, collate_f
 from world_model_friends.world_model.jepa import JEPAPredictor
 
 
-def evaluate(
+def evaluate_world_model(
     model_path: str,
     test_df: pl.DataFrame,
     device: torch.device,

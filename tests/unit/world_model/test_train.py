@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import torch
 
-from world_model_friends.world_model.evaluate import evaluate
+from world_model_friends.world_model.evaluate import evaluate_world_model
 from world_model_friends.world_model.train import train_one_epoch, validate
 
 
@@ -115,7 +115,7 @@ def test_evaluate_side_effects():
             }
             mock_dataloader.return_value = [mock_batch]
 
-            evaluate("dummy_path", test_df, torch.device("cpu"))
+            evaluate_world_model("dummy_path", test_df, torch.device("cpu"))
 
     # If it reached here, it means evaluate ran without error.
     pass
