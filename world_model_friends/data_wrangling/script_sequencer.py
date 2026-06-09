@@ -139,7 +139,7 @@ def generate_sequences(
     return pl.DataFrame(results)
 
 
-def embed_sequences(sequences_df: pl.DataFrame, split_name: str) -> None:
+def embed_sequences(sequences_df: pl.DataFrame, split_name: str) -> pl.DataFrame:
     """
     Transforms generated sequences into training data by creating semantic embeddings.
 
@@ -148,7 +148,7 @@ def embed_sequences(sequences_df: pl.DataFrame, split_name: str) -> None:
         split_name (str): Name of the split for output filenames.
 
     Returns:
-        None: This function writes parquet files to the 'data/' directory.
+        pl.DataFrame: The processed DataFrame containing embeddings.
     """
 
     # config
@@ -166,17 +166,22 @@ def embed_sequences(sequences_df: pl.DataFrame, split_name: str) -> None:
 
     print()
     print("Embedding chunks:")
+    all_chunks = []
     for i in tqdm(range(0, len(context_texts), batch_size)):
         context_embeddings = embed_batch(texts=context_texts[i : i + batch_size])
         target_embeddings = embed_batch(texts=target_texts[i : i + batch_size])
 
         # store the chunk
-        pl.DataFrame({
+        chunk = pl.DataFrame({
             "context_identity": context_identities[i : i + batch_size],
             "context_embedding": context_embeddings,
             "target_identity": target_identities[i : i + batch_size],
             "target_embedding": target_embeddings,
-        }).write_parquet(f"data/{split_name}_{i}.parquet")
+        })
+        chunk.write_parquet(f"data/{split_name}_{i}.parquet")
+        all_chunks.append(chunk)
+
+    return pl.concat(all_chunks)
 
 
 def split_raw_data(
