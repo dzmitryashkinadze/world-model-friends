@@ -9,13 +9,13 @@ The system is implemented as a **Click-based CLI**, providing a modular workflow
 ### Tooling & Development
 - **Dependency Management**: [uv](https://github.com/astral-sh/uv)
 - **Code Quality**: `pre-commit` for linting and running tests.
-- **Development Guide**: See [DEVELOPMENT.md](DEVELOPMENT.md) for strict coding standards.
 
 ### Core Components
 1. **Data Loader & Sequencer**: Processes raw CSV data into sliding window sequences.
 2. **Embedding Engine**: Generates hybrid embeddings (semantic for the dialogue + one hot for the identity of those involved in the dialogue).
 3. **Parquet Storage**: A persistent storage method used to store and index the generated embeddings via Parquet files, facilitating efficient training and retrieval.
 4. **World Model (JEPA-inspired Transformer)**: A transition model implemented as a JEPA-inspired Transformer to predict the next latent state.
+
 ### CLI Workflow
 * `process`: Load CSV, generate sequences, and store embeddings in Parquet files.
 * `train`: Train the latent transition model.
@@ -30,21 +30,21 @@ Constructs a structured dataset for supervised learning.
 * **Pipeline:**
     1. **Sequence Generation**: Apply a sliding window of variable size $N \in [1, 10]$ to the dialogue stream.
     2. **Hybrid Embedding**: For each turn in the sequence, generate a dual-component representation:
-        * **Semantic Component**: Lightweight sentence transformer (`all-MiniLM-L6-v2`).
+        * **Semantic Component**: Embedding transformer (`qwen-3-8b-embedding`).
         * **Identity Component**: One-hot encoded speaker identity.
     3. **Triplet Structuring**: Organize sequences into triplets formatted for training:
         * **Inputs**: 
-            1. **Speaker Sequence**: A sequence of one-hot vectors for the $N$ speakers.
-            2. **Dialogue Sequence**: A sequence of semantic embeddings for the $N$ turns.
-            3. **Target Speaker**: A one-hot vector representing the identity of the next speaker.
+            1. **Speaker Sequence**: A single multi-hot vector for the $N$ speakers.
+            2. **Dialogue Sequence**: A single semantic embedding of the $N$ turns.
+            3. **Target Speaker**: A single one-hot vector representing the identity of the next speaker.
         * **Target**: The semantic embedding of the $(N+1)$-th dialogue turn.
     4. **Data Partitioning**: Split the resulting dataset into **Training**, **Validation**, and **Test** sets.
 
 ### 3. World Model Training
 Trains a predictor model that maps a sequence of context to the next semantic state.
 * **Training Inputs:**
-    1. **Speaker Sequence:** A sequence of one-hot vectors representing the identity of the speaker for each turn in the sequence.
-    2. **Dialogue Sequence:** A sequence of semantic embeddings for the dialogue turns.
+    1. **Speaker Sequence:** A multi-hot vector representing the identity of the speaker for each turn in the sequence.
+    2. **Dialogue Sequence:** A semantic embeddings for the dialogue turns.
     3. **Target Speaker:** A one-hot vector representing the identity of the speaker in the next turn.
 * **Output:** The semantic embedding of the next dialogue turn (the "answer").
 * **Architecture:** A JEPA-inspired Transformer that processes these inputs to predict the next semantic state.

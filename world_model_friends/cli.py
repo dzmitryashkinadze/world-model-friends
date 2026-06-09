@@ -8,11 +8,11 @@ import sys
 
 import click
 
-import world_model_friends.data_wrangling.io as io
-import world_model_friends.data_wrangling.script_sequencer as sequencer
 import world_model_friends.world_model.evaluate as evaluate
 import world_model_friends.world_model.train as train
 from world_model_friends import config
+from world_model_friends.data_wrangling.compile_datasets import compile_datasets
+from world_model_friends.data_wrangling.io import load_parquet_files
 
 
 @click.group()
@@ -28,6 +28,12 @@ def cli() -> None:
     type=click.Path(exists=True),
     default=config.get_config("process", "file_path"),
     help="Path to the CSV file.",
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(),
+    default="data",
+    help="Directory to save the processed parquet files.",
 )
 @click.option(
     "--num-sequences",
@@ -55,8 +61,9 @@ def cli() -> None:
     default=0.1,
     help="Proportion of raw data for validation.",
 )
-def compile_datasets(
+def run_compile_datasets(
     raw_data_file_path: str,
+    output_dir: str,
     num_sequences: int,
     max_context_length: int,
     test_ratio: float,
@@ -67,54 +74,23 @@ def compile_datasets(
 
     Args:
         raw_data_file_path (str): Path to the CSV file.
+        output_dir (str): Directory to save the processed data.
         num_sequences (int): Number of sequences to generate over all splits.
         max_context_length (int): Maximum context length.
         test_ratio (float): Proportion of raw data for testing.
         val_ratio (float): Proportion of raw data for validation.
-        output (str): Path to save the processed data.
 
     Returns:
         None
     """
-    try:
-        # 1. Load CSV
-        df = io.load_csv_to_polars(raw_data_file_path=raw_data_file_path)
-        click.echo(f"Successfully loaded {raw_data_file_path}")
-
-        # 2. Split raw data sequentially
-        test_df, val_df, train_df = sequencer.split_raw_data(
-            df=df, test_ratio=test_ratio, val_ratio=val_ratio
-        )
-
-        # Distribute the total num_sequences across the splits proportionally
-        n_test = int(num_sequences * test_ratio)
-        n_val = int(num_sequences * val_ratio)
-        n_train = num_sequences - n_test - n_val
-
-        # 3. Generate, Embed and Store for each split
-        # processing
-        test_df = sequencer.process_split(
-            split_df=test_df,
-            split_name="test",
-            n_sequences=n_test,
-            max_context_length=max_context_length,
-        )
-        val_df = sequencer.process_split(
-            split_df=val_df,
-            split_name="val",
-            n_sequences=n_val,
-            max_context_length=max_context_length,
-        )
-        train_df = sequencer.process_split(
-            split_df=train_df,
-            split_name="train",
-            n_sequences=n_train,
-            max_context_length=max_context_length,
-        )
-
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
+    compile_datasets(
+        raw_data_file_path=raw_data_file_path,
+        output_dir=output_dir,
+        num_sequences=num_sequences,
+        max_context_length=max_context_length,
+        test_ratio=test_ratio,
+        val_ratio=val_ratio,
+    )
 
 
 @cli.command(name="train")
@@ -152,8 +128,8 @@ def train_world_model(train_file: str, val_file: str, max_files: int) -> None:
         None
     """
     try:
-        train_df = io.load_parquet_files(train_file, max_files)
-        val_df = io.load_parquet_files(val_file, max_files)
+        train_df = load_parquet_files(train_file, max_files)
+        val_df = load_parquet_files(val_file, max_files)
 
         train.main(train_df, val_df)
         click.echo("Training completed successfully.")
@@ -202,7 +178,7 @@ def evaluate_model(model_path: str, test_file: str, max_files: int) -> None:
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        test_df = io.load_parquet_files(test_file, max_files)
+        test_df = load_parquet_files(test_file, max_files)
         evaluate.evaluate(model_path, test_df, device)
 
     except Exception as e:

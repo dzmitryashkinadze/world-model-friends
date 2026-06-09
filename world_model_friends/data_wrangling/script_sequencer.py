@@ -12,7 +12,11 @@ from world_model_friends.config import get_config
 
 
 def process_split(
-    split_df: pl.DataFrame, split_name: str, n_sequences: int, max_context_length: int
+    split_df: pl.DataFrame,
+    split_name: str,
+    n_sequences: int,
+    max_context_length: int,
+    output_dir: str = "data",
 ) -> pl.DataFrame | None:
     """
     Process a dataframe split by generating sequences and embedding them.
@@ -22,6 +26,8 @@ def process_split(
         split_name (str): Name of the split (e.g., 'train', 'test').
         n_sequences (int): Number of sequences to generate.
         max_context_length (int): Maximum context length for sequences.
+        output_dir (str): Directory to save the processed parquet files.
+            Defaults to 'data'.
 
     Returns:
         pl.DataFrame | None: The processed DataFrame containing embeddings,
@@ -36,7 +42,9 @@ def process_split(
     print(f"Generated {len(seq_df)} sequences for {split_name}.")
 
     # Embed sequences
-    seq_df = embed_sequences(sequences_df=seq_df, split_name=split_name)
+    seq_df = embed_sequences(
+        sequences_df=seq_df, split_name=split_name, output_dir=output_dir
+    )
     print(f"Embedded sequences for {split_name}.")
     return seq_df
 
@@ -139,13 +147,17 @@ def generate_sequences(
     return pl.DataFrame(results)
 
 
-def embed_sequences(sequences_df: pl.DataFrame, split_name: str) -> pl.DataFrame:
+def embed_sequences(
+    sequences_df: pl.DataFrame, split_name: str, output_dir: str = "data"
+) -> pl.DataFrame:
     """
     Transforms generated sequences into training data by creating semantic embeddings.
 
     Args:
         sequences_df (pl.DataFrame): The generated sequences DataFrame.
         split_name (str): Name of the split for output filenames.
+        output_dir (str): Directory to save the processed parquet files
+            Defaults to 'data'.
 
     Returns:
         pl.DataFrame: The processed DataFrame containing embeddings.
@@ -165,6 +177,7 @@ def embed_sequences(sequences_df: pl.DataFrame, split_name: str) -> pl.DataFrame
     target_identities = sequences_df["target_identity"].to_list()
 
     print()
+    print(sequences_df)
     print("Embedding chunks:")
     all_chunks = []
     for i in tqdm(range(0, len(context_texts), batch_size)):
@@ -172,13 +185,18 @@ def embed_sequences(sequences_df: pl.DataFrame, split_name: str) -> pl.DataFrame
         target_embeddings = embed_batch(texts=target_texts[i : i + batch_size])
 
         # store the chunk
+        print(len(context_embeddings))
+        print(len(target_embeddings))
+        print(i)
+        print(batch_size)
+        print(context_identities)
         chunk = pl.DataFrame({
             "context_identity": context_identities[i : i + batch_size],
             "context_embedding": context_embeddings,
             "target_identity": target_identities[i : i + batch_size],
             "target_embedding": target_embeddings,
         })
-        chunk.write_parquet(f"data/{split_name}_{i}.parquet")
+        chunk.write_parquet(f"{output_dir}/{split_name}_{i}.parquet")
         all_chunks.append(chunk)
 
     return pl.concat(all_chunks)
