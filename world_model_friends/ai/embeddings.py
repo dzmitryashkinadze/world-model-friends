@@ -19,19 +19,15 @@ def embed_batch(texts: list[str]) -> list[list[float]]:
         list[list[float]]: A list of embeddings,
             where each embedding is a list of floats.
     """
+    # config
     url = get_config("embeddings", "model_url")
     endpoint = f"{url.rstrip('/')}/v1/embeddings"
-
-    # The OpenAI API format for /v1/embeddings:
-    # POST /v1/embeddings
-    # { "input": ["string1", "string2"], "model": "..." }
     payload = {
         "input": texts,
     }
 
+    # get the embedding from local server
     response = requests.post(endpoint, json=payload)
     response.raise_for_status()
-
     data = response.json()
-    # OpenAI response format: { "data": [ {"embedding": [...]}, ... ] }
     return [item["embedding"] for item in data["data"]]
