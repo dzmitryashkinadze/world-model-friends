@@ -5,8 +5,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from world_model_friends.config import get_config
-from world_model_friends.world_model.dataset import WorldModelDataset, collate_fn
-from world_model_friends.world_model.jepa import JEPAPredictor
+from world_model_friends.predictor.dataset import WorldModelDataset, collate_fn
+from world_model_friends.predictor.jepa import JEPAPredictor
 
 
 def evaluate_world_model(
@@ -28,7 +28,7 @@ def evaluate_world_model(
     # 1. Get config for model architecture
     num_heads = get_config("train", "num_heads")
     num_speakers = len(get_config("process", "main_characters")) + 1
-    emb_dim = get_config("embeddings", "dimension")
+    emb_dim = get_config("embedding", "dimension")
     num_layers = get_config("train", "num_layers", default=2)
     dropout = get_config("train", "dropout")
 

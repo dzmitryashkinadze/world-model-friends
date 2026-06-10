@@ -1,10 +1,12 @@
 import sys
 
+from world_model_friends.config import get_config
 from world_model_friends.data_wrangling.io import load_csv_to_polars
 from world_model_friends.data_wrangling.script_sequencer import (
     process_split,
     split_raw_data,
 )
+from world_model_friends.encoder.embeddings import embed_lines
 
 
 def compile_datasets(
@@ -34,7 +36,12 @@ def compile_datasets(
         df = load_csv_to_polars(raw_data_file_path=raw_data_file_path)
         print(f"Successfully loaded {raw_data_file_path}")
 
-        # 2. Split raw data sequentially
+        # 2. Embed lines
+        df = embed_lines(
+            df=df, model_name=get_config("embedding", "model_name"), output_path="data"
+        )
+
+        # 3. Split raw data sequentially
         test_df, val_df, train_df = split_raw_data(
             df=df, test_ratio=test_ratio, val_ratio=val_ratio
         )
@@ -44,7 +51,7 @@ def compile_datasets(
         n_val = int(num_sequences * val_ratio)
         n_train = num_sequences - n_test - n_val
 
-        # 3. Generate, Embed and Store for each split
+        # 4. Generate, Embed and Store for each split
         # processing
         test_df = process_split(
             split_df=test_df,

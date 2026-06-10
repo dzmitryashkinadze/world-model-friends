@@ -1,6 +1,6 @@
 import torch
 
-from world_model_friends.world_model.jepa import JEPAPredictor
+from world_model_friends.predictor.jepa import JEPAPredictor
 
 
 def test_jepa_predictor_init():

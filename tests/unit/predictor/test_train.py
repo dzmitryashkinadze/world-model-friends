@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import torch
 
-from world_model_friends.world_model.evaluate import evaluate_world_model
-from world_model_friends.world_model.train import train_one_epoch, validate
+from world_model_friends.predictor.evaluate import evaluate_world_model
+from world_model_friends.predictor.train import train_one_epoch, validate
 
 
 def test_validate():
@@ -50,7 +50,7 @@ def test_train_one_epoch():
     val_loader = [mock_batch]
     device = torch.device("cpu")
 
-    with patch("world_model_friends.world_model.train.get_config") as mock_get_config:
+    with patch("world_model_friends.predictor.train.get_config") as mock_get_config:
         mock_get_config.return_value = 1  # running_train_loss_steps
 
         avg_loss = train_one_epoch(
@@ -73,9 +73,9 @@ def test_evaluate_side_effects():
     import polars as pl
 
     with (
-        patch("world_model_friends.world_model.evaluate.get_config") as mock_get_config,
-        patch("world_model_friends.world_model.evaluate.torch.load") as mock_torch_load,
-        patch("world_model_friends.world_model.evaluate.JEPAPredictor") as mock_jepa,
+        patch("world_model_friends.predictor.evaluate.get_config") as mock_get_config,
+        patch("world_model_friends.predictor.evaluate.torch.load") as mock_torch_load,
+        patch("world_model_friends.predictor.evaluate.JEPAPredictor") as mock_jepa,
     ):
         # Setup mock return values
         # Need to return something that has len() for num_speakers
@@ -105,7 +105,7 @@ def test_evaluate_side_effects():
         })
 
         with patch(
-            "world_model_friends.world_model.evaluate.DataLoader"
+            "world_model_friends.predictor.evaluate.DataLoader"
         ) as mock_dataloader:
             mock_batch = {
                 "context_identity": torch.tensor([[1.0, 0.0]]),

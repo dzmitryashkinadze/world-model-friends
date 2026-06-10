@@ -7,8 +7,8 @@ import random
 import polars as pl
 from tqdm import tqdm
 
-from world_model_friends.ai.embeddings import embed_batch
 from world_model_friends.config import get_config
+from world_model_friends.encoder.embeddings import embed_sequences
 
 
 def process_split(
@@ -145,61 +145,6 @@ def generate_sequences(
         })
 
     return pl.DataFrame(results)
-
-
-def embed_sequences(
-    sequences_df: pl.DataFrame, split_name: str, output_dir: str = "data"
-) -> pl.DataFrame:
-    """
-    Transforms generated sequences into training data by creating semantic embeddings.
-
-    Args:
-        sequences_df (pl.DataFrame): The generated sequences DataFrame.
-        split_name (str): Name of the split for output filenames.
-        output_dir (str): Directory to save the processed parquet files
-            Defaults to 'data'.
-
-    Returns:
-        pl.DataFrame: The processed DataFrame containing embeddings.
-    """
-
-    # config
-    batch_size = get_config("embeddings", "batch_size")
-
-    # get embedding model
-    print()
-    print("Loading the embedding model:")
-
-    # 1. Batch embed all context and target texts
-    context_texts = sequences_df["context_text"].to_list()
-    target_texts = sequences_df["target_text"].to_list()
-    context_identities = sequences_df["context_identity"].to_list()
-    target_identities = sequences_df["target_identity"].to_list()
-
-    print()
-    print(sequences_df)
-    print("Embedding chunks:")
-    all_chunks = []
-    for i in tqdm(range(0, len(context_texts), batch_size)):
-        context_embeddings = embed_batch(texts=context_texts[i : i + batch_size])
-        target_embeddings = embed_batch(texts=target_texts[i : i + batch_size])
-
-        # store the chunk
-        print(len(context_embeddings))
-        print(len(target_embeddings))
-        print(i)
-        print(batch_size)
-        print(context_identities)
-        chunk = pl.DataFrame({
-            "context_identity": context_identities[i : i + batch_size],
-            "context_embedding": context_embeddings,
-            "target_identity": target_identities[i : i + batch_size],
-            "target_embedding": target_embeddings,
-        })
-        chunk.write_parquet(f"{output_dir}/{split_name}_{i}.parquet")
-        all_chunks.append(chunk)
-
-    return pl.concat(all_chunks)
 
 
 def split_raw_data(

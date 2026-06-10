@@ -1,7 +1,7 @@
 import polars as pl
 import torch
 
-from world_model_friends.world_model.dataset import WorldModelDataset, collate_fn
+from world_model_friends.predictor.dataset import WorldModelDataset, collate_fn
 
 
 def test_world_model_dataset_init_and_len():

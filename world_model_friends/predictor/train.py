@@ -13,8 +13,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from world_model_friends.config import get_config
-from world_model_friends.world_model.dataset import WorldModelDataset, collate_fn
-from world_model_friends.world_model.jepa import JEPAPredictor
+from world_model_friends.predictor.dataset import WorldModelDataset, collate_fn
+from world_model_friends.predictor.jepa import JEPAPredictor
 
 
 def train_one_epoch(
@@ -125,7 +125,7 @@ def train_world_model(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
     # config
     num_heads = get_config("train", "num_heads")  # Make sure emb_dim % num_heads == 0
     num_speakers = len(get_config("process", "main_characters")) + 1
-    emb_dim = get_config("embeddings", "dimension")
+    emb_dim = get_config("embedding", "dimension")
     epochs = get_config("train", "epochs")
     num_layers = get_config("train", "num_layers", default=2)
     best_val_loss = float("inf")
@@ -216,7 +216,7 @@ def train_world_model(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             counter = 0
-            torch.save(model.state_dict(), "best_model.pt")
+            torch.save(model.state_dict(), "data/best_model.pt")
             print(f"  --> New best model saved (Val Loss: {best_val_loss:.6f})")
         else:
             counter += 1

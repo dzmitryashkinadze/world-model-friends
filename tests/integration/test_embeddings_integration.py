@@ -1,16 +1,26 @@
-from world_model_friends.ai import embed_batch
-from world_model_friends.config import get_config
+"""Integration tests for embeddings."""
+
+from unittest.mock import patch
+
+import numpy as np
+
+
+def fake_encode(texts, convert_to_numpy=False):
+    """Fake encode that returns fixed-dimension embeddings without pulling a model."""
+    dim = 1024
+    return np.zeros((len(texts), dim))
 
 
 def test_embed_string_basic():
-    """Test the remote embedding model."""
+    """Test the embedding model with a mocked encoder."""
+    from world_model_friends.encoder import embed_batch
+
     text = ["hello world"]
-    # Note: This test requires the llama.cpp server to be running on localhost:8081
-    try:
+
+    # Patch the model where it's used, not where it's defined
+    with patch("world_model_friends.encoder.embeddings.model.encode", fake_encode):
         embedding = embed_batch(texts=text)
 
         assert isinstance(embedding, list)
-        assert len(embedding[0]) == get_config("embeddings", "dimension")
+        assert len(embedding[0]) == 1024  # fake_encode dim
         assert all(isinstance(x, float) for x in embedding[0])
-    except Exception as e:
-        print(f"Skipping test due to connection error: {e}")

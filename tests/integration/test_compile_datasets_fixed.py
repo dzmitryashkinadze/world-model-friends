@@ -1,16 +1,11 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-import numpy as np
 import polars as pl
 
 from world_model_friends.data_wrangling.compile_datasets import compile_datasets
 
 
 def test_compile_datasets_integration(tmp_path):
-    # [0] Set up test folder structure
-    # We'll use tmp_path which is a pytest fixture for a temporary directory.
-    # This satisfies the requirement of a test folder structure and handles cleanup.
-
     test_data_dir = tmp_path / "test_data"
     test_data_dir.mkdir()
     test_output_dir = tmp_path / "test_output"
@@ -18,7 +13,6 @@ def test_compile_datasets_integration(tmp_path):
 
     synthetic_csv = test_data_dir / "synthetic.csv"
 
-    # [1] Hard code a synthetic CSV
     csv_content = """Name,Lines
 Alice,Hello there!
 Bob,"Hi Alice, how are you?"
@@ -33,20 +27,31 @@ Bob,Agreed!
 """
     synthetic_csv.write_text(csv_content)
 
-    # [2] Mock the embedding model so we don't download from HF,
-    # then run the compile logic which internally calls embed_lines
-    # and embed_sequences (both use model.encode under the hood)
-    #
-    # We patch the model reference in the embeddings module because that's
-    # where the singleton is actually used (imported from model.py).
+    # We need to patch get_config to ensure batch_size is not None
+    # and patch model.encode to mock the embeddings.
+    with (
+        patch("world_model_friends.config.get_config") as mock_get_config,
+        patch("world_model_friends.encoder.model.model.encode") as mock_encode,
+    ):
+        # Mock get_config to return sensible values
+        def get_config_side_effect(section, key):
+            if section == "embeddings" and key == "batch_size":
+                return 2
+            if section == "embedding" and key == "model_name":
+                return "all-MiniLM-L6-v2"
+            return None
 
-    def fake_encode(texts, convert_to_numpy=False):
-        # Return fixed-dimension embeddings (match model dim=1024 for qwen3)
-        dim = 1024
-        return np.zeros((len(texts), dim))
+        mock_get_config.side_effect = get_config_side_effect
 
-    # Patch the model where it's used, not where it's defined
-    with patch("world_model_friends.encoder.embeddings.model.encode", fake_encode):
+        # Mock encode to return a mock object with a .tolist() method
+        def encode_side_effect(texts, **kwargs):
+            dim = 3
+            mock_res = MagicMock()
+            mock_res.tolist.return_value = [[0.0] * dim for _ in range(len(texts))]
+            return mock_res
+
+        mock_encode.side_effect = encode_side_effect
+
         # run the logic
         compile_datasets(
             raw_data_file_path=str(synthetic_csv),
@@ -58,7 +63,6 @@ Bob,Agreed!
         )
 
     # [3] Tests on final files
-    # Check that parquet files were created in the output directory
     output_files = list(test_output_dir.glob("*.parquet"))
     assert len(output_files) > 0
 
@@ -82,6 +86,3 @@ Bob,Agreed!
     assert has_train
     assert has_test
     assert has_val
-
-    # [4] Clean up
-    # tmp_path handles it.

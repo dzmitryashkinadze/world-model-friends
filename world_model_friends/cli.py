@@ -11,8 +11,8 @@ import click
 from world_model_friends import config
 from world_model_friends.data_wrangling.compile_datasets import compile_datasets
 from world_model_friends.data_wrangling.io import load_parquet_files
-from world_model_friends.world_model.evaluate import evaluate_world_model
-from world_model_friends.world_model.train import train_world_model
+from world_model_friends.predictor.evaluate import evaluate_world_model
+from world_model_friends.predictor.train import train_world_model
 
 
 @click.group()

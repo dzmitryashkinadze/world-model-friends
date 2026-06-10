@@ -11,8 +11,8 @@ process:
     "Monica"
   ]
 
-embeddings:
-  model_url: "http://localhost:8081"
+embedding:
+  model_name: "Qwen/Qwen3-Embedding-8B"
   dimension: 4096
   batch_size: 10
 

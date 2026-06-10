@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import polars as pl
 
-from world_model_friends.world_model.train import train_world_model
+from world_model_friends.predictor.train import train_world_model
 
 
 def test_train_world_model_integration(tmp_path):
@@ -51,7 +51,7 @@ def test_train_world_model_integration(tmp_path):
             "max_files": 1,
             "running_train_loss_steps": 1,
         },
-        "embeddings": {
+        "embedding": {
             "dimension": dim,
         },
         "process": {
@@ -66,12 +66,12 @@ def test_train_world_model_integration(tmp_path):
             return default
 
     with patch(
-        "world_model_friends.world_model.train.get_config", side_effect=side_effect
+        "world_model_friends.predictor.train.get_config", side_effect=side_effect
     ):
         # [2] Run the 'train' command
         train_world_model(train_df=train_df, val_df=val_df)
 
     # [4] Verify model file was created
-    assert os.path.exists("best_model.pt")
+    assert os.path.exists("data/best_model.pt")
     # Clean up
-    os.remove("best_model.pt")
+    os.remove("data/best_model.pt")

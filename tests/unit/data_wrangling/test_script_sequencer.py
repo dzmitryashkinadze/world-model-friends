@@ -4,7 +4,6 @@ import polars as pl
 import pytest
 
 from world_model_friends.data_wrangling.script_sequencer import (
-    embed_sequences,
     generate_sequences,
     process_split,
     split_raw_data,
@@ -58,32 +57,6 @@ def test_split_raw_data(dummy_df):
     assert len(test_df) == 0
     assert len(val_df) == 1
     assert len(train_df) == 4
-
-
-def test_embed_sequences(mock_config):
-    sequences_df = pl.DataFrame({
-        "context_identity": [[1.0, 0.0], [0.0, 1.0]],
-        "context_text": ["Alice: Hello", "Bob: Hi"],
-        "target_identity": [[0.0, 1.0], [1.0, 0.0]],
-        "target_text": ["Bob: Hi", "Alice: Hello"],
-    })
-
-    with (
-        patch(
-            "world_model_friends.data_wrangling.script_sequencer.embed_batch"
-        ) as mock_embed,
-        patch(
-            "world_model_friends.data_wrangling.script_sequencer.get_config"
-        ) as mock_cfg,
-    ):
-        mock_cfg.return_value = 32
-        mock_embed.side_effect = lambda texts: [[0.1, 0.1] for _ in texts]
-
-        with patch("polars.DataFrame.write_parquet") as mock_write:
-            result_df = embed_sequences(sequences_df, split_name="test")
-            assert mock_write.called
-            assert isinstance(result_df, pl.DataFrame)
-            assert result_df.height == 2
 
 
 def test_process_split(dummy_df, mock_config):
