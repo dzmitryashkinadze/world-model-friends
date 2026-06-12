@@ -1,7 +1,7 @@
 process:
   raw_data_file_path: "data/Friends_script.csv"
   script_with_line_embeddings_path: "data/Friends_script_embeddings.parquet"
-  num_sequences: 50_000
+  num_sequences: 50
   max_context_length: 10
   main_characters: [
     "Ross",
@@ -21,7 +21,6 @@ train:
   train_file: "data/train_*.parquet"
   val_file: "data/val_*.parquet"
   test_file: "data/test_*.parquet"
-  max_files: 10_000
   num_layers: 2
   batch_size: 4
   num_heads: 4

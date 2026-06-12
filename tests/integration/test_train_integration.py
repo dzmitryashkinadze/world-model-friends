@@ -48,7 +48,6 @@ def test_train_world_model_integration(tmp_path):
             "scheduler_patience": 1,
             "patience": 1,
             "batch_size": 2,
-            "max_files": 1,
             "running_train_loss_steps": 1,
         },
         "embedding": {

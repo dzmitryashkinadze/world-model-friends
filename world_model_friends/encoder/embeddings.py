@@ -44,7 +44,7 @@ def embed_lines(df: pl.DataFrame) -> pl.DataFrame:
 
 def embed_sequences(
     sequences_df: pl.DataFrame, split_name: str, output_dir: str = "data"
-) -> pl.DataFrame:
+) -> None:
     """
     Transforms generated sequences into training data by creating semantic embeddings.
 
@@ -73,7 +73,6 @@ def embed_sequences(
 
     print()
     print("Embedding chunks:")
-    all_chunks = []
     for i in tqdm(range(0, len(context_texts), batch_size)):
         context_embeddings = embed_batch(texts=context_texts[i : i + batch_size])
 
@@ -85,6 +84,3 @@ def embed_sequences(
             "target_embedding": target_embeddings[i : i + batch_size],
         })
         chunk.write_parquet(f"{output_dir}/{split_name}_{i}.parquet")
-        all_chunks.append(chunk)
-
-    return pl.concat(all_chunks)

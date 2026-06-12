@@ -11,6 +11,7 @@ dependencies = [
     "PyYaml>=6.0.3",
     "tqdm>=4.67.3",
     "sentence-transformers>=5.5.1",
+    "numpy>=2.4.6",
 ]
 
 [project.scripts]

@@ -108,28 +108,20 @@ def run_compile_datasets(
     default=config.get_config("train", "val_file"),
     help="Path to the validation parquet file.",
 )
-@click.option(
-    "--max-files",
-    "-m",
-    type=int,
-    default=config.get_config("train", "max_files"),
-    help="Limit the number of files to read.",
-)
-def run_train_world_model(train_file: str, val_file: str, max_files: int) -> None:
+def run_train_world_model(train_file: str, val_file: str) -> None:
     """
     Trains the world model using the provided parquet files.
 
     Args:
         train_file (str): Path to the training parquet file.
         val_file (str): Path to the validation parquet file.
-        max_files (int): Limit the number of files to read.
 
     Returns:
         None
     """
     try:
-        train_df = load_parquet_files(train_file, max_files)
-        val_df = load_parquet_files(val_file, max_files)
+        train_df = load_parquet_files(train_file)
+        val_df = load_parquet_files(val_file)
 
         train_world_model(train_df=train_df, val_df=val_df)
         click.echo("Training completed successfully.")
@@ -154,21 +146,13 @@ def run_train_world_model(train_file: str, val_file: str, max_files: int) -> Non
     default=config.get_config("train", "test_file"),
     help="Path to the test parquet files.",
 )
-@click.option(
-    "--max-files",
-    "-f",
-    type=int,
-    default=config.get_config("train", "max_files"),
-    help="Limit the number of files to read.",
-)
-def run_evaluate_world_model(model_path: str, test_file: str, max_files: int) -> None:
+def run_evaluate_world_model(model_path: str, test_file: str) -> None:
     """
     Evaluates a trained world model artifact.
 
     Args:
         model_path (str): Path to the model artifact (.pt).
         test_file (str): Path to the test parquet files.
-        max_files (int): Limit the number of files to read.
 
     Returns:
         None
@@ -178,7 +162,7 @@ def run_evaluate_world_model(model_path: str, test_file: str, max_files: int) ->
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        test_df = load_parquet_files(test_file, max_files)
+        test_df = load_parquet_files(test_file)
         evaluate_world_model(model_path, test_df, device)
 
     except Exception as e:

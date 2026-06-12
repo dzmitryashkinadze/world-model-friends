@@ -46,6 +46,7 @@ def process_split(
         sequences_df=seq_df, split_name=split_name, output_dir=output_dir
     )
     print(f"Embedded sequences for {split_name}.")
+
     return seq_df
 
 

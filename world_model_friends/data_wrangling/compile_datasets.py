@@ -1,7 +1,9 @@
+import glob
+import os
 import sys
 
 from world_model_friends.config import get_config
-from world_model_friends.data_wrangling.io import load_csv_to_polars
+from world_model_friends.data_wrangling.io import load_csv_to_polars, load_parquet_files
 from world_model_friends.data_wrangling.script_sequencer import (
     process_split,
     split_raw_data,
@@ -76,6 +78,25 @@ def compile_datasets(
             max_context_length=max_context_length,
             output_dir=output_dir,
         )
+
+        # Combine all sequences
+        load_parquet_files(pattern=f"{output_dir}/train_*.parquet").write_parquet(
+            file=f"{output_dir}/train.parquet"
+        )
+        load_parquet_files(pattern=f"{output_dir}/val_*.parquet").write_parquet(
+            file=f"{output_dir}/val.parquet"
+        )
+        load_parquet_files(pattern=f"{output_dir}/test_*.parquet").write_parquet(
+            file=f"{output_dir}/test.parquet"
+        )
+
+        # Clean up the embedding chunks
+        for f in glob.glob(f"{output_dir}/train_*.parquet"):
+            os.remove(f)
+        for f in glob.glob(f"{output_dir}/test_*.parquet"):
+            os.remove(f)
+        for f in glob.glob(f"{output_dir}/val_*.parquet"):
+            os.remove(f)
 
     except Exception as e:
         print(f"Error: {e}")

@@ -1110,6 +1110,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
+    { name = "numpy" },
     { name = "polars" },
     { name = "pyyaml" },
     { name = "sentence-transformers" },
@@ -1128,6 +1129,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.4.1" },
+    { name = "numpy", specifier = ">=2.4.6" },
     { name = "polars", specifier = ">=1.41.2" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "sentence-transformers", specifier = ">=5.5.1" },
