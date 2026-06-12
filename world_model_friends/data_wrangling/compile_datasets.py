@@ -1,5 +1,6 @@
 import sys
 
+from world_model_friends.config import get_config
 from world_model_friends.data_wrangling.io import load_csv_to_polars
 from world_model_friends.data_wrangling.script_sequencer import (
     process_split,
@@ -39,6 +40,7 @@ def compile_datasets(
         # 2. Embed lines
         # Columns: (Name, Lines, line_embedding)
         df = embed_lines(df=df)
+        df.write_parquet(get_config("process", "script_with_line_embeddings_path"))
 
         # 3. Split raw data sequentially
         # Columns: (Name, Lines, embedding)

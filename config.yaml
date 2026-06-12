@@ -1,5 +1,6 @@
 process:
   raw_data_file_path: "data/Friends_script.csv"
+  script_with_line_embeddings_path: "data/Friends_script_embeddings.parquet"
   num_sequences: 50_000
   max_context_length: 10
   main_characters: [

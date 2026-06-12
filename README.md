@@ -3,23 +3,25 @@
 An experimental project aimed at training and benchmarking a **latent-space world model**. The goal is to predict the *semantic embedding* of the next dialogue turn in a *Friends* episode script, learning the underlying narrative flow and character transitions in a compressed latent representation.
 
 ## Architecture
-
 The system is implemented as a **Click-based CLI**, providing a modular workflow for data processing and modeling.
 
 ### Tooling & Development
 - **Dependency Management**: [uv](https://github.com/astral-sh/uv)
-- **Code Quality**: `pre-commit` for linting and running tests.
+- **Code Quality**: `pre-commit`, `ruff`, and `deptry` for linting and running tests.
+- **Parquet Storage**: A persistent storage method used to store and index the generated embeddings via Parquet files, facilitating efficient training and retrieval.
 
 ### Core Components
 1. **Data Loader & Sequencer**: Processes raw CSV data into sliding window sequences.
-2. **Embedding Engine**: Generates hybrid embeddings (semantic for the dialogue + one hot for the identity of those involved in the dialogue).
-3. **Parquet Storage**: A persistent storage method used to store and index the generated embeddings via Parquet files, facilitating efficient training and retrieval.
-4. **World Model (JEPA-inspired Transformer)**: A transition model implemented as a JEPA-inspired Transformer to predict the next latent state.
+2. **Encoder**: Generates hybrid embeddings (semantic for the dialogue + one hot for the identity of those involved in the dialogue).
+4. **Predictor (JEPA-inspired Transformer)**: A transition model implemented as a JEPA-inspired Transformer to predict the next latent state.
+5. **Decoder**: A model to convert the predicted embedding into natural text:
+  5.1 - Decoder based on simple retrieval of most similar line from the Friends script based on the embeddings
+  5.2 - Decoder based on the LLM prediction with a virtual token representing the target embedding
 
 ### CLI Workflow
-* `process`: Load CSV, generate sequences, and store embeddings in Parquet files.
-* `train`: Train the latent transition model.
-* `evaluate`: Evaluate a trained model artifact.
+* `run_compile_datasets`: Load CSV, generate sequences, and store embeddings in Parquet files.
+* `run_train_world_model`: Train the latent transition model.
+* `run_evaluate_world_model`: Evaluate a trained model artifact.
 
 ### Data
 The project is based on the following Kaggle dataset (to be placed in data directory):
@@ -40,7 +42,7 @@ Constructs a structured dataset for supervised learning.
         * **Target**: The semantic embedding of the $(N+1)$-th dialogue turn.
     4. **Data Partitioning**: Split the resulting dataset into **Training**, **Validation**, and **Test** sets.
 
-### 3. World Model Training
+### 3. World Model Training (Predictor)
 Trains a predictor model that maps a sequence of context to the next semantic state.
 * **Training Inputs:**
     1. **Speaker Sequence:** A multi-hot vector representing the identity of the speaker for each turn in the sequence.
@@ -49,7 +51,7 @@ Trains a predictor model that maps a sequence of context to the next semantic st
 * **Output:** The semantic embedding of the next dialogue turn (the "answer").
 * **Architecture:** A JEPA-inspired Transformer that processes these inputs to predict the next semantic state.
 
-### 4. Output Interpretation
+### 4. Output Interpretation (Decoder)
 * **Goal:** Convert abstract latent predictions into human-readable dialogue to make the model's output user-friendly.
 * **Method:**
     1. **Targeted Search**: Take the predicted semantic embedding and perform a cosine similarity search in the stored data files.
