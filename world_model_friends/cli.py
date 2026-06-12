@@ -170,5 +170,62 @@ def run_evaluate_world_model(model_path: str, test_file: str) -> None:
         sys.exit(1)
 
 
+@cli.command(name="inference")
+@click.option(
+    "--context",
+    "-v",
+    type=click.STRING,
+    required=True,
+    help="Context dialogue",
+)
+@click.option(
+    "--context_identities",
+    "-v",
+    type=click.List,
+    required=True,
+    help="Identities of people from the context dialogue [Joey, Rachel, etc]",
+)
+@click.option(
+    "--target_identity",
+    "-v",
+    type=click.STRING,
+    required=True,
+    help="Target identity (Joey, Rachel, Monica, etc)",
+)
+@click.option(
+    "--model-path",
+    "-m",
+    type=click.Path(exists=True),
+    required=True,
+    help="Path to the model artifact (.pt).",
+)
+@click.option(
+    "--decoder",
+    "-v",
+    type=click.STRING,
+    help="Decoder type",
+)
+def run_world_model_inference(
+    context: str,
+    context_identities: list[str],
+    target_identity: str,
+    model_path: str,
+    decoder: str,
+) -> str:
+    """
+    Runs the world model inference
+
+    Args:
+        context: Context for world model prediction
+        target_identity: Target identity for the prediction
+        model_path: Model path
+        decoder: Decoder type
+
+    Returns:
+        Predicted scipt line (answer).
+    """
+    return "TODO"
+
+
 if __name__ == "__main__":
     cli()

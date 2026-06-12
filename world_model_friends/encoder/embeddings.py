@@ -84,3 +84,50 @@ def embed_sequences(
             "target_embedding": target_embeddings[i : i + batch_size],
         })
         chunk.write_parquet(f"{output_dir}/{split_name}_{i}.parquet")
+
+
+def embed_inference_request(
+    context_identities: list[str], context_text: str, target_identity: str
+) -> tuple[list[float], list[float], list[float]]:
+    """
+    Embed an inference request by converting identity names to vectors
+    and embedding the context text.
+
+    Args:
+        context_identities (list[str]): List of character names in the context.
+        context_text (str): The context text to embed.
+        target_identity (str): The target character name.
+
+    Returns:
+        tuple[list[float], list[float], list[float]]:
+            (context_identity, context_embedding, target_identity) as vectors.
+    """
+
+    # get main characters configuration
+    main_characters = get_config("process", "main_characters")
+    num_speakers = len(main_characters) + 1  # +1 for unknown characters
+
+    # build name-to-index mapping
+    name_to_idx = {name: i for i, name in enumerate(main_characters)}
+
+    # 1. Convert context identities to multi-hot vector
+    context_identity = [0.0] * num_speakers
+    for name in context_identities:
+        idx = name_to_idx.get(name, -1)
+        if idx != -1:
+            context_identity[idx] = 1.0
+        else:
+            context_identity[-1] = 1.0
+
+    # 2. Embed the context text
+    context_embedding = embed_batch([context_text])[0]
+
+    # 3. Convert target identity to one-hot vector
+    target_vec = [0.0] * num_speakers
+    idx = name_to_idx.get(target_identity, -1)
+    if idx != -1:
+        target_vec[idx] = 1.0
+    else:
+        target_vec[-1] = 1.0
+
+    return (context_identity, context_embedding, target_vec)
