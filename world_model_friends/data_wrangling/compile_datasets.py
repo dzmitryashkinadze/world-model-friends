@@ -37,10 +37,11 @@ def compile_datasets(
         print(f"Successfully loaded {raw_data_file_path}")
 
         # 2. Embed lines
-        # Columns: (Name, Lines, embedding)
+        # Columns: (Name, Lines, line_embedding)
         df = embed_lines(df=df)
 
         # 3. Split raw data sequentially
+        # Columns: (Name, Lines, embedding)
         test_df, val_df, train_df = split_raw_data(
             df=df, test_ratio=test_ratio, val_ratio=val_ratio
         )

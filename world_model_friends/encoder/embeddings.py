@@ -39,7 +39,7 @@ def embed_lines(df: pl.DataFrame) -> pl.DataFrame:
     embeddings_list = embeddings.tolist()
 
     # Add embeddings column
-    return df.with_columns(pl.Series("embeddings", embeddings_list))
+    return df.with_columns(pl.Series("line_embedding", embeddings_list))
 
 
 def embed_sequences(
@@ -67,23 +67,22 @@ def embed_sequences(
 
     # 1. Batch embed all context and target texts
     context_texts = sequences_df["context_text"].to_list()
-    target_texts = sequences_df["target_text"].to_list()
     context_identities = sequences_df["context_identity"].to_list()
     target_identities = sequences_df["target_identity"].to_list()
+    target_embeddings = sequences_df["target_embedding"].to_list()
 
     print()
     print("Embedding chunks:")
     all_chunks = []
     for i in tqdm(range(0, len(context_texts), batch_size)):
         context_embeddings = embed_batch(texts=context_texts[i : i + batch_size])
-        target_embeddings = embed_batch(texts=target_texts[i : i + batch_size])
 
         # store the chunk
         chunk = pl.DataFrame({
             "context_identity": context_identities[i : i + batch_size],
             "context_embedding": context_embeddings,
             "target_identity": target_identities[i : i + batch_size],
-            "target_embedding": target_embeddings,
+            "target_embedding": target_embeddings[i : i + batch_size],
         })
         chunk.write_parquet(f"{output_dir}/{split_name}_{i}.parquet")
         all_chunks.append(chunk)

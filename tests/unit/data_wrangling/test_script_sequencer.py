@@ -15,6 +15,7 @@ def dummy_df():
     return pl.DataFrame({
         "Name": ["Ross", "Rachel", "Chandler", "Monica", "Joey"],
         "Lines": ["Hello", "Hi there", "How are you?", "I am good", "Fine thanks"],
+        "line_embedding": [[1.0, 0.0] for _ in range(5)],
     })
 
 
@@ -27,7 +28,7 @@ def mock_config():
         yield mock
 
 
-def test_generate_sequences(dummy_df, mock_config):
+def test_generate_sequences(dummy_df):
     num_sequences = 5
     max_context_length = 2
 
@@ -39,6 +40,7 @@ def test_generate_sequences(dummy_df, mock_config):
         "context_text",
         "target_identity",
         "target_text",
+        "target_embedding",
         "context_length",
     ]
     assert all(col in sequences_df.columns for col in expected_columns)

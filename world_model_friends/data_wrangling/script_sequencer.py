@@ -81,6 +81,7 @@ def generate_sequences(
     # Convert columns to lists for faster access in the loop
     names = df["Name"].to_list()
     lines = df["Lines"].to_list()
+    embeddings = df["line_embedding"].to_list()
 
     print()
     print("Picking sequences:")
@@ -133,14 +134,16 @@ def generate_sequences(
             else:
                 target_identity[-1] = 1.0
 
-        # 4. target_text
+        # 4. target text and embedding
         target_text = lines[target_idx]
+        target_embedding = embeddings[target_idx]
 
         results.append({
             "context_identity": context_identity,
             "context_text": context_text,
             "target_identity": target_identity,
             "target_text": target_text,
+            "target_embedding": target_embedding,
             "context_length": cl,
         })
 
