@@ -27,7 +27,7 @@ def embed_batch(texts: list[str]) -> list[list[float]]:
     return embeddings.tolist()
 
 
-def embed_lines(df: pl.DataFrame, model_name: str, output_path: str) -> pl.DataFrame:
+def embed_lines(df: pl.DataFrame) -> pl.DataFrame:
     """
     Embeds the 'Lines' column of a CSV file and saves it to a Parquet file.
     """

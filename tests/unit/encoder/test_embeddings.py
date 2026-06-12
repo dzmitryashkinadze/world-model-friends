@@ -45,7 +45,7 @@ def test_embed_lines():
         mock_encode.return_value = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
 
         # Note: model_name and output_path are unused in current implementation
-        result = embed_lines(df, model_name="test", output_path="test.parquet")
+        result = embed_lines(df)
 
         assert "embeddings" in result.columns
         assert result["embeddings"].to_list()[0] == [0.1, 0.2, 0.3]
