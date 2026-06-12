@@ -26,7 +26,7 @@ def cli() -> None:
     "--raw_data_file_path",
     "-f",
     type=click.Path(exists=True),
-    default=config.get_config("process", "file_path"),
+    default=config.get_config("process", "raw_data_file_path"),
     help="Path to the CSV file.",
 )
 @click.option(

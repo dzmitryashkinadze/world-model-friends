@@ -18,10 +18,10 @@ def load_csv_to_polars(raw_data_file_path: str) -> pl.DataFrame:
     Returns:
         pl.DataFrame: The loaded DataFrame.
     """
-    return pl.read_csv(raw_data_file_path)
+    return pl.read_csv(source=raw_data_file_path)
 
 
-def load_parquet_files(pattern: str, limit: int = None) -> pl.DataFrame:
+def load_parquet_files(pattern: str) -> pl.DataFrame:
     """
     Loads parquet files matching a pattern into a Polars DataFrame.
 
@@ -32,12 +32,10 @@ def load_parquet_files(pattern: str, limit: int = None) -> pl.DataFrame:
     Returns:
         pl.DataFrame: The loaded DataFrame.
     """
-    files = sorted(glob.glob(pattern))
-    if limit is not None and limit > 0:
-        files = files[:limit]
+    files = sorted(glob.glob(pathname=pattern))
     if not files:
         raise ValueError(f"No files found for pattern: {pattern}")
-    return pl.read_parquet(files)
+    return pl.read_parquet(source=files)
 
 
 def save_folds(
@@ -61,8 +59,8 @@ def save_folds(
     test_output = f"{base}_test{ext}"
     val_output = f"{base}_val{ext}"
 
-    train_df.write_parquet(train_output)
-    test_df.write_parquet(test_output)
-    val_df.write_parquet(val_output)
+    train_df.write_parquet(file=train_output)
+    test_df.write_parquet(file=test_output)
+    val_df.write_parquet(file=val_output)
 
     return train_output, test_output, val_output

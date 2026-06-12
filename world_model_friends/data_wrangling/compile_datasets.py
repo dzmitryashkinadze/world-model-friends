@@ -43,6 +43,7 @@ def compile_datasets(
         # Columns: (Name, Lines, line_embedding)
         df = embed_lines(df=df)
         df.write_parquet(get_config("process", "script_with_line_embeddings_path"))
+        print(f"Successfully embedded {raw_data_file_path}")
 
         # 3. Split raw data sequentially
         # Columns: (Name, Lines, embedding)

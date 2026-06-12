@@ -1,5 +1,6 @@
 process:
-  raw_data_file_path: "data/Friends_script.csv"
+  #raw_data_file_path: "data/Friends_script.csv"
+  raw_data_file_path: "data/Friends_script_short.csv"
   script_with_line_embeddings_path: "data/Friends_script_embeddings.parquet"
   num_sequences: 50
   max_context_length: 10
@@ -13,14 +14,16 @@ process:
   ]
 
 embedding:
-  model_name: "Qwen/Qwen3-Embedding-8B"
-  dimension: 4096
+  # model_name: "Qwen/Qwen3-Embedding-8B"
+  model_name: "Qwen/Qwen3-Embedding-0.6B"
+  # dimension: 4096
+  dimension: 1024
   batch_size: 10
 
 train:
-  train_file: "data/train_*.parquet"
-  val_file: "data/val_*.parquet"
-  test_file: "data/test_*.parquet"
+  train_file: "data/train.parquet"
+  val_file: "data/val.parquet"
+  test_file: "data/test.parquet"
   num_layers: 2
   batch_size: 4
   num_heads: 4

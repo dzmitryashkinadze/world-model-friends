@@ -37,10 +37,6 @@ def test_load_parquet_files(tmp_path):
     assert loaded_df.height == 2
     assert loaded_df["a"].to_list() == [1, 2]
 
-    # Test loading with limit
-    loaded_df_limited = load_parquet_files(pattern, limit=1)
-    assert loaded_df_limited.height == 1
-
     # Test ValueError when no files found
     with pytest.raises(ValueError, match="No files found for pattern"):
         load_parquet_files("non_existent_pattern_*.parquet")
