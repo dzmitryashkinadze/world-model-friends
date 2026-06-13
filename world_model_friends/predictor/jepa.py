@@ -22,21 +22,21 @@ class JEPAPredictor(nn.Module):
 
     def __init__(
         self,
-        num_speakers: int,
+        n_speakers: int,
         emb_dim: int,
-        num_heads: int = 4,
-        num_layers: int = 2,
+        n_heads: int = 4,
+        n_layers: int = 2,
         dropout: float = 0.1,
     ):
         """
         Initializes the JEPAPredictor.
 
         Args:
-            num_speakers (int): Number of possible speakers (for identity projection).
+            n_speakers (int): Number of possible speakers (for identity projection).
             emb_dim (int): Dimensionality of the latent embedding space.
-            num_heads (int, optional): Number of attention heads in the Transformer.
+            n_heads (int, optional): Number of attention heads in the Transformer.
                 Defaults to 4.
-            num_layers (int, optional): Number of Transformer layers. Defaults to 2.
+            n_layers (int, optional): Number of Transformer layers. Defaults to 2.
             dropout (float, optional): Dropout probability. Defaults to 0.1.
         """
         super().__init__()
@@ -45,28 +45,31 @@ class JEPAPredictor(nn.Module):
         # 1. Latent Projections
         # Map discrete multi-hot/one-hot vectors into the
         # shared continuous embedding space
-        self.context_id_proj = nn.Linear(num_speakers, emb_dim)
-        self.target_id_proj = nn.Linear(num_speakers, emb_dim)
+        self.context_id_proj = nn.Linear(in_features=n_speakers, out_features=emb_dim)
+        self.target_id_proj = nn.Linear(in_features=n_speakers, out_features=emb_dim)
 
         # 2. The Predict Token (analogous to a [CLS] token in BERT)
         # This learned parameter gathers information from the other tokens
         # to form the prediction
-        self.predict_token = nn.Parameter(torch.randn(1, 1, emb_dim))
+        self.predict_token = nn.Parameter(data=torch.randn(1, 1, emb_dim))
 
         # 3. Transformer Predictor
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=emb_dim,
-            nhead=num_heads,
+            nhead=n_heads,
             dim_feedforward=emb_dim * 4,
             dropout=dropout,
             batch_first=True,
             activation="gelu",
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
 
         # 4. Final Head
         # Projects the processed predict token into the exact target space
-        self.head = nn.Sequential(nn.LayerNorm(emb_dim), nn.Linear(emb_dim, emb_dim))
+        self.head = nn.Sequential(
+            nn.LayerNorm(normalized_shape=emb_dim),
+            nn.Linear(in_features=emb_dim, out_features=emb_dim),
+        )
 
     def forward(
         self,
@@ -79,10 +82,10 @@ class JEPAPredictor(nn.Module):
 
         Args:
             context_identity (torch.Tensor): Multi-hot tensor
-                of shape (B, num_speakers).
+                of shape (B, n_speakers).
             context_embedding (torch.Tensor): Continuous latent state tensor
                 of shape (B, emb_dim).
-            target_identity (torch.Tensor): One-hot tensor of shape (B, num_speakers).
+            target_identity (torch.Tensor): One-hot tensor of shape (B, n_speakers).
 
         Returns:
             torch.Tensor: Predicted next latent state embedding of shape (B, emb_dim).
@@ -91,7 +94,7 @@ class JEPAPredictor(nn.Module):
 
         # Project inputs to tokens of shape (B, 1, emb_dim)
         ctx_id_tok = self.context_id_proj(context_identity).unsqueeze(1)
-        ctx_emb_tok = context_embedding.unsqueeze(1)
+        ctx_emb_tok = context_embedding.unsqueeze(dim=1)
         tgt_id_tok = self.target_id_proj(target_identity).unsqueeze(1)
 
         # Expand the predict token for the current batch

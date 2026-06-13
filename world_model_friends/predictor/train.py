@@ -66,8 +66,10 @@ def train_one_epoch(
         total_loss += loss_value
         running_train_loss += loss_value
 
-        if step % get_config("train", "running_train_loss_steps") == 0:
-            _loss = running_train_loss / get_config("train", "running_train_loss_steps")
+        if step % get_config(section="train", key="running_train_loss_steps") == 0:
+            _loss = running_train_loss / get_config(
+                section="train", key="running_train_loss_steps"
+            )
             print(f"Running training loss: {_loss}")
             running_train_loss = 0
 
@@ -123,13 +125,15 @@ def train_world_model(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
         None
     """
     # config
-    num_heads = get_config("train", "num_heads")  # Make sure emb_dim % num_heads == 0
-    num_speakers = len(get_config("process", "main_characters")) + 1
-    emb_dim = get_config("embedding", "dimension")
-    epochs = get_config("train", "epochs")
-    num_layers = get_config("train", "num_layers", default=2)
+    n_heads = get_config(
+        section="train", key="n_heads"
+    )  # Make sure emb_dim % n_heads == 0
+    n_speakers = len(get_config(section="process", key="main_characters")) + 1
+    emb_dim = get_config(section="embedding", key="dimension")
+    epochs = get_config(section="train", key="epochs")
+    n_layers = get_config(section="train", key="n_layers", default=2)
     best_val_loss = float("inf")
-    patience = get_config("train", "patience")
+    patience = get_config(section="train", key="patience")
 
     # device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -137,26 +141,26 @@ def train_world_model(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
     print(f"Using device: {device}")
 
     # convert the data to the pytorch format
-    train_ds = WorldModelDataset(train_df)
-    val_ds = WorldModelDataset(val_df)
+    train_ds = WorldModelDataset(df=train_df)
+    val_ds = WorldModelDataset(df=val_df)
     print()
     print("Loaded datasets to pytorch.")
 
     # define the model
     model = JEPAPredictor(
-        num_speakers=num_speakers,
+        n_speakers=n_speakers,
         emb_dim=emb_dim,
-        num_heads=num_heads,
-        num_layers=num_layers,
-        dropout=get_config("train", "dropout"),
+        n_heads=n_heads,
+        n_layers=n_layers,
+        dropout=get_config(section="train", key="dropout"),
     ).to(device)
     print()
     print("Loaded the model.")
 
     optimizer = optim.AdamW(
         params=model.parameters(),
-        lr=get_config("train", "learning_rate"),
-        weight_decay=get_config("train", "weight_decay"),
+        lr=get_config(section="train", key="learning_rate"),
+        weight_decay=get_config(section="train", key="weight_decay"),
     )
     print()
     print("Defined the optimizer.")
@@ -164,22 +168,22 @@ def train_world_model(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
     criterion = nn.HuberLoss()
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer=optimizer,
-        mode=get_config("train", "scheduler_mode"),
-        factor=get_config("train", "scheduler_factor"),
-        patience=get_config("train", "scheduler_patience"),
+        mode=get_config(section="train", key="scheduler_mode"),
+        factor=get_config(section="train", key="scheduler_factor"),
+        patience=get_config(section="train", key="scheduler_patience"),
     )
     print()
     print("Defined the scheduler.")
 
     train_loader = DataLoader(
         dataset=train_ds,
-        batch_size=get_config("train", "batch_size"),
+        batch_size=get_config(section="train", key="batch_size"),
         shuffle=True,
         collate_fn=collate_fn,
     )
     val_loader = DataLoader(
         dataset=val_ds,
-        batch_size=get_config("train", "batch_size"),
+        batch_size=get_config(section="train", key="batch_size"),
         shuffle=False,
         collate_fn=collate_fn,
     )
@@ -205,7 +209,7 @@ def train_world_model(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
         )
 
         # Step the scheduler
-        scheduler.step(val_loss)
+        scheduler.step(metrics=val_loss)
 
         print(
             f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.6f} - "
@@ -216,7 +220,10 @@ def train_world_model(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             counter = 0
-            torch.save(model.state_dict(), "data/best_model.pt")
+            torch.save(
+                obj=model.state_dict(),
+                f=get_config(section="train", key="model_artifact_path"),
+            )
             print(f"  --> New best model saved (Val Loss: {best_val_loss:.6f})")
         else:
             counter += 1

@@ -26,32 +26,32 @@ def evaluate_world_model(
         float: The average loss for the test set.
     """
     # 1. Get config for model architecture
-    num_heads = get_config("train", "num_heads")
-    num_speakers = len(get_config("process", "main_characters")) + 1
-    emb_dim = get_config("embedding", "dimension")
-    num_layers = get_config("train", "num_layers", default=2)
-    dropout = get_config("train", "dropout")
+    n_heads = get_config(section="train", key="n_heads")
+    n_speakers = len(get_config(section="process", key="main_characters")) + 1
+    emb_dim = get_config(section="embedding", key="dimension")
+    n_layers = get_config(section="train", key="n_layers", default=2)
+    dropout = get_config(section="train", key="dropout")
 
     # 2. Instantiate model
     model = JEPAPredictor(
-        num_speakers=num_speakers,
+        n_speakers=n_speakers,
         emb_dim=emb_dim,
-        num_heads=num_heads,
-        num_layers=num_layers,
+        n_heads=n_heads,
+        n_layers=n_layers,
         dropout=dropout,
     ).to(device)
 
     # 3. Load weights
     print(f"Loading model weights from: {model_path}")
-    state_dict = torch.load(model_path, map_location=device)
+    state_dict = torch.load(f=model_path, map_location=device)
     model.load_state_dict(state_dict)
     model.eval()
 
     # 4. Prepare dataset
-    val_ds = WorldModelDataset(test_df)
+    val_ds = WorldModelDataset(df=test_df)
     val_loader = DataLoader(
         dataset=val_ds,
-        batch_size=get_config("train", "batch_size"),
+        batch_size=get_config(section="train", key="batch_size"),
         shuffle=False,
         collate_fn=collate_fn,
     )

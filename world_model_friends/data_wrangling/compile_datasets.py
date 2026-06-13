@@ -14,7 +14,7 @@ from world_model_friends.encoder.embeddings import embed_lines
 def compile_datasets(
     raw_data_file_path: str,
     output_dir: str,
-    num_sequences: int,
+    n_sequences: int,
     max_context_length: int,
     test_ratio: float,
     val_ratio: float,
@@ -25,7 +25,7 @@ def compile_datasets(
     Args:
         raw_data_file_path (str): Path to the CSV file.
         output_dir (str): Directory to save the processed data.
-        num_sequences (int): Number of sequences to generate over all splits.
+        n_sequences (int): Number of sequences to generate over all splits.
         max_context_length (int): Maximum context length.
         test_ratio (float): Proportion of raw data for testing.
         val_ratio (float): Proportion of raw data for validation.
@@ -42,7 +42,9 @@ def compile_datasets(
         # 2. Embed lines
         # Columns: (Name, Lines, line_embedding)
         df = embed_lines(df=df)
-        df.write_parquet(get_config("process", "script_with_line_embeddings_path"))
+        df.write_parquet(
+            file=get_config(section="process", key="script_with_line_embeddings_path")
+        )
         print(f"Successfully embedded {raw_data_file_path}")
 
         # 3. Split raw data sequentially
@@ -51,10 +53,10 @@ def compile_datasets(
             df=df, test_ratio=test_ratio, val_ratio=val_ratio
         )
 
-        # Distribute the total num_sequences across the splits proportionally
-        n_test = int(num_sequences * test_ratio)
-        n_val = int(num_sequences * val_ratio)
-        n_train = num_sequences - n_test - n_val
+        # Distribute the total n_sequences across the splits proportionally
+        n_test = int(n_sequences * test_ratio)
+        n_val = int(n_sequences * val_ratio)
+        n_train = n_sequences - n_test - n_val
 
         # 4. Generate, Embed and Store for each split
         # processing
@@ -92,12 +94,12 @@ def compile_datasets(
         )
 
         # Clean up the embedding chunks
-        for f in glob.glob(f"{output_dir}/train_*.parquet"):
-            os.remove(f)
-        for f in glob.glob(f"{output_dir}/test_*.parquet"):
-            os.remove(f)
-        for f in glob.glob(f"{output_dir}/val_*.parquet"):
-            os.remove(f)
+        for f in glob.glob(pathname=f"{output_dir}/train_*.parquet"):
+            os.remove(path=f)
+        for f in glob.glob(pathname=f"{output_dir}/test_*.parquet"):
+            os.remove(path=f)
+        for f in glob.glob(pathname=f"{output_dir}/val_*.parquet"):
+            os.remove(path=f)
 
     except Exception as e:
         print(f"Error: {e}")

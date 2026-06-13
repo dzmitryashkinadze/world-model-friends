@@ -56,7 +56,7 @@ Bob,Agreed!
         compile_datasets(
             raw_data_file_path=str(synthetic_csv),
             output_dir=str(test_output_dir),
-            num_sequences=10,
+            n_sequences=10,
             max_context_length=3,
             test_ratio=0.2,
             val_ratio=0.2,

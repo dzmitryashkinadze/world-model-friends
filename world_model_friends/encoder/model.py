@@ -15,7 +15,9 @@ class EmbeddingModel:
         # load the model only if actually invoked
         if self.model is None:
             print("Loading the embedding model from HF")
-            self.model = SentenceTransformer(get_config("embedding", "model_name"))
+            self.model = SentenceTransformer(
+                model_name_or_path=get_config(section="embedding", key="model_name")
+            )
 
         return self.model.encode(texts, *args, **kwargs)
 

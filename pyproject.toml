@@ -18,6 +18,7 @@ dependencies = [
 compile-datasets = "world_model_friends.cli:run_compile_datasets"
 train-world-model = "world_model_friends.cli:run_train_world_model"
 evaluate-model = "world_model_friends.cli:run_evaluate_world_model"
+world-model-inference = "world_model_friends.cli:run_world_model_inference"
 
 [dependency-groups]
 dev = [

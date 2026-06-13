@@ -11,8 +11,8 @@ def load_config():
     if not CONFIG_PATH.exists():
         return {}
     try:
-        with open(CONFIG_PATH) as f:
-            return yaml.safe_load(f)
+        with open(file=CONFIG_PATH) as f:
+            return yaml.safe_load(stream=f)
     except Exception:
         return {}
 

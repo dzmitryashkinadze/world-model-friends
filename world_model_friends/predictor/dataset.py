@@ -55,16 +55,16 @@ class WorldModelDataset(Dataset):
         """
         return {
             "context_identity": torch.tensor(
-                self.context_identity[idx], dtype=torch.float32
+                data=self.context_identity[idx], dtype=torch.float32
             ),
             "context_embedding": torch.tensor(
-                self.context_embedding[idx], dtype=torch.float32
+                data=self.context_embedding[idx], dtype=torch.float32
             ),
             "target_identity": torch.tensor(
-                self.target_identity[idx], dtype=torch.float32
+                data=self.target_identity[idx], dtype=torch.float32
             ),
             "target_embedding": torch.tensor(
-                self.target_embedding[idx], dtype=torch.float32
+                data=self.target_embedding[idx], dtype=torch.float32
             ),
         }
 
@@ -91,8 +91,8 @@ def collate_fn(batch: list[dict[str, torch.Tensor]]) -> dict[str, torch.Tensor]:
         target_identity.append(item["target_identity"])
         target_embedding.append(item["target_embedding"])
     return {
-        "context_identity": torch.stack(context_identity),
-        "context_embedding": torch.stack(context_embedding),
-        "target_identity": torch.stack(target_identity),
-        "target_embedding": torch.stack(target_embedding),
+        "context_identity": torch.stack(tensors=context_identity),
+        "context_embedding": torch.stack(tensors=context_embedding),
+        "target_identity": torch.stack(tensors=target_identity),
+        "target_embedding": torch.stack(tensors=target_embedding),
     }

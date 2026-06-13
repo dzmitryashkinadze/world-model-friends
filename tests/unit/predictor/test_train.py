@@ -72,21 +72,19 @@ def test_evaluate_side_effects():
 
     import polars as pl
 
+    def get_config(section, key, default=None):
+        return {
+            "train": {"n_heads": 4, "n_layers": 2, "dropout": 0.1, "batch_size": 1},
+            "process": {"main_characters": ["Char1", "Char2"]},
+            "embeddings": {"dimension": 16},
+        }.get(section, {}).get(key, default)
+
     with (
         patch("world_model_friends.predictor.evaluate.get_config") as mock_get_config,
         patch("world_model_friends.predictor.evaluate.torch.load") as mock_torch_load,
         patch("world_model_friends.predictor.evaluate.JEPAPredictor") as mock_jepa,
     ):
-        # Setup mock return values
-        # Need to return something that has len() for num_speakers
-        mock_get_config.side_effect = lambda key, subkey, default=None: {
-            ("train", "num_heads"): 4,
-            ("process", "main_characters"): ["Char1", "Char2"],
-            ("embeddings", "dimension"): 16,
-            ("train", "num_layers"): 2,
-            ("train", "dropout"): 0.1,
-            ("train", "batch_size"): 1,
-        }.get((key, subkey), default)
+        mock_get_config.side_effect = get_config
 
         mock_torch_load.return_value = {}
         mock_jepa.return_value.to.return_value = MagicMock()

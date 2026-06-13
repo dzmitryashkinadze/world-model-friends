@@ -29,12 +29,12 @@ def mock_config():
 
 
 def test_generate_sequences(dummy_df):
-    num_sequences = 5
+    n_sequences = 5
     max_context_length = 2
 
-    sequences_df = generate_sequences(dummy_df, num_sequences, max_context_length)
+    sequences_df = generate_sequences(dummy_df, n_sequences, max_context_length)
 
-    assert len(sequences_df) == num_sequences
+    assert len(sequences_df) == n_sequences
     expected_columns = [
         "context_identity",
         "context_text",

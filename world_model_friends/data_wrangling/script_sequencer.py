@@ -37,7 +37,9 @@ def process_split(
         return None
 
     # Generate sequences
-    seq_df = generate_sequences(split_df, n_sequences, max_context_length)
+    seq_df = generate_sequences(
+        df=split_df, n_sequences=n_sequences, max_context_length=max_context_length
+    )
     print(f"Generated {len(seq_df)} sequences for {split_name}.")
 
     # Embed sequences
@@ -50,7 +52,7 @@ def process_split(
 
 
 def generate_sequences(
-    df: pl.DataFrame, num_sequences: int, max_context_length: int
+    df: pl.DataFrame, n_sequences: int, max_context_length: int
 ) -> pl.DataFrame:
     """
     Generates sequences of turns from a dataframe.
@@ -59,7 +61,7 @@ def generate_sequences(
 
     Args:
         df (pl.DataFrame): Polars DataFrame with columns 'Name' and 'Lines'.
-        num_sequences (int): Number of sequences to generate.
+        n_sequences (int): Number of sequences to generate.
         max_context_length (int): Max length of context.
 
     Returns:
@@ -69,7 +71,7 @@ def generate_sequences(
 
     # drop nans
     df = df.drop_nulls(subset=["Lines", "Name"])
-    df = df.filter(pl.col("Lines").str.strip_chars() != "")
+    df = df.filter(pl.col(name="Lines").str.strip_chars() != "")
     df_len = len(df)
 
     # Convert columns to lists for faster access in the loop
@@ -79,9 +81,9 @@ def generate_sequences(
 
     print()
     print("Picking sequences:")
-    for _ in tqdm(range(num_sequences)):
+    for _ in tqdm(range(n_sequences)):
         # Random context length cl from 1 to max_context_length
-        cl = random.randint(1, max_context_length)
+        cl = random.randint(a=1, b=max_context_length)
 
         # The index i must be such that i + cl < df_len
         # So i <= df_len - cl - 1
@@ -89,12 +91,12 @@ def generate_sequences(
 
         if max_i < 0:
             # Adjust cl if it's too large for the current df
-            cl = random.randint(1, min(max_context_length, df_len - 1))
+            cl = random.randint(a=1, b=min(max_context_length, df_len - 1))
             max_i = df_len - cl - 1
             if max_i < 0:
                 continue
 
-        i = random.randint(0, max_i)
+        i = random.randint(a=0, b=max_i)
 
         # Context rows: df[i : i+cl]
         # target row: df[i+cl]
@@ -103,7 +105,7 @@ def generate_sequences(
 
         # 1. context identity
         context_names = names[i : i + cl]
-        context_identity = embed_names(context_names)
+        context_identity = embed_names(names=context_names)
 
         # 2. context_text: "Name: Line\n"
         context_text_parts = []
@@ -113,7 +115,7 @@ def generate_sequences(
 
         # 3. target identity
         target_idx = i + cl
-        target_identity = embed_names(names[target_idx])
+        target_identity = embed_names(names=names[target_idx])
 
         # 4. target text and embedding
         target_text = lines[target_idx]
@@ -128,7 +130,7 @@ def generate_sequences(
             "context_length": cl,
         })
 
-    return pl.DataFrame(results)
+    return pl.DataFrame(data=results)
 
 
 def split_raw_data(
@@ -150,9 +152,9 @@ def split_raw_data(
     test_end = int(n * test_ratio)
     val_end = int(n * (test_ratio + val_ratio))
 
-    test_df = df.slice(0, test_end)
-    val_df = df.slice(test_end, val_end - test_end)
-    train_df = df.slice(val_end, n - val_end)
+    test_df = df.slice(offset=0, length=test_end)
+    val_df = df.slice(offset=test_end, length=val_end - test_end)
+    train_df = df.slice(offset=val_end, length=n - val_end)
 
     print()
     print("Split raw data sequentially:")

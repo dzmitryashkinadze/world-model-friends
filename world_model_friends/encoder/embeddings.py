@@ -39,7 +39,7 @@ def embed_lines(df: pl.DataFrame) -> pl.DataFrame:
     embeddings_list = embeddings.tolist()
 
     # Add embeddings column
-    return df.with_columns(pl.Series("line_embedding", embeddings_list))
+    return df.with_columns(pl.Series(name="line_embedding", values=embeddings_list))
 
 
 def embed_sequences(
@@ -59,7 +59,7 @@ def embed_sequences(
     """
 
     # config
-    batch_size = get_config("embedding", "batch_size")
+    batch_size = get_config(section="embedding", key="batch_size")
 
     # get embedding model
     print()
@@ -77,26 +77,28 @@ def embed_sequences(
         context_embeddings = embed_batch(texts=context_texts[i : i + batch_size])
 
         # store the chunk
-        chunk = pl.DataFrame({
-            "context_identity": context_identity[i : i + batch_size],
-            "context_embedding": context_embeddings,
-            "target_identity": target_identity[i : i + batch_size],
-            "target_embedding": target_embeddings[i : i + batch_size],
-        })
-        chunk.write_parquet(f"{output_dir}/{split_name}_{i}.parquet")
+        chunk = pl.DataFrame(
+            data={
+                "context_identity": context_identity[i : i + batch_size],
+                "context_embedding": context_embeddings,
+                "target_identity": target_identity[i : i + batch_size],
+                "target_embedding": target_embeddings[i : i + batch_size],
+            }
+        )
+        chunk.write_parquet(file=f"{output_dir}/{split_name}_{i}.parquet")
 
 
 def embed_names(names: list[str]) -> list[float]:
     """Embed character names (Joey, Monica, etc) into a multi-hot vector."""
     # get main characters configuration
-    main_characters = get_config("process", "main_characters")
-    num_speakers = len(main_characters) + 1  # +1 for unknown characters
+    main_characters = get_config(section="process", key="main_characters")
+    n_speakers = len(main_characters) + 1  # +1 for unknown characters
 
     # build name-to-index mapping
     name_to_idx = {name: i for i, name in enumerate(main_characters)}
 
     # 1. Convert context identities to multi-hot vector
-    context_identity = [0.0] * num_speakers
+    context_identity = [0.0] * n_speakers
     for name in names:
         idx = name_to_idx.get(name, -1)
         if idx != -1:
@@ -127,6 +129,6 @@ def embed_inference_request(
     target_identity = embed_names(names=[target_name])
 
     # 2. Embed the context text
-    context_embedding = embed_batch([context_text])[0]
+    context_embedding = embed_batch(texts=[context_text])[0]
 
     return (context_identity, context_embedding, target_identity)

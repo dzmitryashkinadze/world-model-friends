@@ -25,32 +25,36 @@ def infer(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Get config for model architecture
-    num_heads = get_config("train", "num_heads")
-    num_speakers = len(get_config("process", "main_characters")) + 1
-    emb_dim = get_config("embedding", "dimension")
-    num_layers = get_config("train", "num_layers", default=2)
-    dropout = get_config("train", "dropout")
+    n_heads = get_config(section="train", key="n_heads")
+    n_speakers = len(get_config(section="process", key="main_characters")) + 1
+    emb_dim = get_config(section="embedding", key="dimension")
+    n_layers = get_config(section="train", key="n_layers", default=2)
+    dropout = get_config(section="train", key="dropout")
 
     model = JEPAPredictor(
-        num_speakers=num_speakers,
+        n_speakers=n_speakers,
         emb_dim=emb_dim,
-        num_heads=num_heads,
-        num_layers=num_layers,
+        n_heads=n_heads,
+        n_layers=n_layers,
         dropout=dropout,
     ).to(device)
 
     # Load weights
-    state_dict = torch.load(model_path, map_location=device)
+    state_dict = torch.load(f=model_path, map_location=device)
     model.load_state_dict(state_dict)
     model.eval()
     context_identity, context_embedding, target_identity = request
 
     # Convert lists to tensors and add batch dimension
-    context_identity = torch.tensor(context_identity, dtype=torch.float32).unsqueeze(0)
-    context_embedding = torch.tensor(context_embedding, dtype=torch.float32).unsqueeze(
-        0
+    context_identity = torch.tensor(
+        data=context_identity, dtype=torch.float32
+    ).unsqueeze(dim=0)
+    context_embedding = torch.tensor(
+        data=context_embedding, dtype=torch.float32
+    ).unsqueeze(dim=0)
+    target_identity = torch.tensor(data=target_identity, dtype=torch.float32).unsqueeze(
+        dim=0
     )
-    target_identity = torch.tensor(target_identity, dtype=torch.float32).unsqueeze(0)
 
     # Forward pass
     prediction = model(context_identity, context_embedding, target_identity)

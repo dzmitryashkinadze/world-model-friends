@@ -2,7 +2,7 @@ process:
   #raw_data_file_path: "data/Friends_script.csv"
   raw_data_file_path: "data/Friends_script_short.csv"
   script_with_line_embeddings_path: "data/Friends_script_embeddings.parquet"
-  num_sequences: 50
+  n_sequences: 50
   max_context_length: 10
   main_characters: [
     "Ross",
@@ -24,9 +24,10 @@ train:
   train_file: "data/train.parquet"
   val_file: "data/val.parquet"
   test_file: "data/test.parquet"
-  num_layers: 2
+  model_artifact_path: "data/best_model.pt"
+  n_layers: 2
   batch_size: 4
-  num_heads: 4
+  n_heads: 4
   dropout: 0.2
   scheduler_mode: "min"
   scheduler_factor: 0.5
