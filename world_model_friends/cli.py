@@ -179,18 +179,18 @@ def run_evaluate_world_model(model_path: str, test_file: str) -> None:
     help="Context dialogue",
 )
 @click.option(
-    "--context_identities",
+    "--context_names",
     "-v",
     type=click.List,
     required=True,
-    help="Identities of people from the context dialogue [Joey, Rachel, etc]",
+    help="Names of people from the context dialogue [Joey, Rachel, etc]",
 )
 @click.option(
-    "--target_identity",
+    "--target_name",
     "-v",
     type=click.STRING,
     required=True,
-    help="Target identity (Joey, Rachel, Monica, etc)",
+    help="Target name (Joey, Rachel, Monica, etc)",
 )
 @click.option(
     "--model-path",
@@ -207,8 +207,8 @@ def run_evaluate_world_model(model_path: str, test_file: str) -> None:
 )
 def run_world_model_inference(
     context: str,
-    context_identities: list[str],
-    target_identity: str,
+    context_names: list[str],
+    target_name: str,
     model_path: str,
     decoder: str,
 ) -> str:

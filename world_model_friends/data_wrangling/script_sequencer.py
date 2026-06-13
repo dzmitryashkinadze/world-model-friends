@@ -7,8 +7,7 @@ import random
 import polars as pl
 from tqdm import tqdm
 
-from world_model_friends.config import get_config
-from world_model_friends.encoder.embeddings import embed_sequences
+from world_model_friends.encoder.embeddings import embed_names, embed_sequences
 
 
 def process_split(
@@ -73,12 +72,6 @@ def generate_sequences(
     df = df.filter(pl.col("Lines").str.strip_chars() != "")
     df_len = len(df)
 
-    # characters configuration
-    name_to_idx = {
-        name: i for i, name in enumerate(get_config("process", "main_characters"))
-    }
-    num_characters = len(get_config("process", "main_characters")) + 1
-
     # Convert columns to lists for faster access in the loop
     names = df["Name"].to_list()
     lines = df["Lines"].to_list()
@@ -108,15 +101,9 @@ def generate_sequences(
 
         context_indices = range(i, i + cl)
 
-        # 1. context_names: list of unique names
-        context_identity = [0.0] * num_characters
-        for idx in context_indices:
-            name = names[idx]
-            idx = name_to_idx.get(name, -1)
-            if idx != -1:
-                context_identity[idx] = 1.0
-            else:
-                context_identity[-1] = 1.0
+        # 1. context identity
+        context_names = names[i : i + cl]
+        context_identity = embed_names(context_names)
 
         # 2. context_text: "Name: Line\n"
         context_text_parts = []
@@ -126,14 +113,7 @@ def generate_sequences(
 
         # 3. target identity
         target_idx = i + cl
-        target_identity = [0.0] * num_characters
-        for idx in context_indices:
-            name = names[idx]
-            idx = name_to_idx.get(name, -1)
-            if idx != -1:
-                target_identity[idx] = 1.0
-            else:
-                target_identity[-1] = 1.0
+        target_identity = embed_names(names[target_idx])
 
         # 4. target text and embedding
         target_text = lines[target_idx]

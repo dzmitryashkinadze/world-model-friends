@@ -70,7 +70,7 @@ class JEPAPredictor(nn.Module):
 
     def forward(
         self,
-        context_identities: torch.Tensor,
+        context_identity: torch.Tensor,
         context_embedding: torch.Tensor,
         target_identity: torch.Tensor,
     ) -> torch.Tensor:
@@ -78,7 +78,7 @@ class JEPAPredictor(nn.Module):
         Performs a forward pass through the predictor.
 
         Args:
-            context_identities (torch.Tensor): Multi-hot tensor
+            context_identity (torch.Tensor): Multi-hot tensor
                 of shape (B, num_speakers).
             context_embedding (torch.Tensor): Continuous latent state tensor
                 of shape (B, emb_dim).
@@ -90,7 +90,7 @@ class JEPAPredictor(nn.Module):
         batch_size = context_embedding.size(0)
 
         # Project inputs to tokens of shape (B, 1, emb_dim)
-        ctx_id_tok = self.context_id_proj(context_identities).unsqueeze(1)
+        ctx_id_tok = self.context_id_proj(context_identity).unsqueeze(1)
         ctx_emb_tok = context_embedding.unsqueeze(1)
         tgt_id_tok = self.target_id_proj(target_identity).unsqueeze(1)
 

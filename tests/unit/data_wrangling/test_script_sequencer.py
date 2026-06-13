@@ -61,7 +61,7 @@ def test_split_raw_data(dummy_df):
     assert len(train_df) == 4
 
 
-def test_process_split(dummy_df, mock_config):
+def test_process_split(dummy_df):
     with (
         patch(
             "world_model_friends.data_wrangling.script_sequencer.generate_sequences"

@@ -20,11 +20,11 @@ def test_jepa_predictor_forward():
     model = JEPAPredictor(num_speakers=num_speakers, emb_dim=emb_dim)
     model.eval()
 
-    context_identities = torch.zeros(batch_size, num_speakers)  # Simplified for test
+    context_identity = torch.zeros(batch_size, num_speakers)  # Simplified for test
     context_embedding = torch.randn(batch_size, emb_dim)
     target_identity = torch.zeros(batch_size, num_speakers)  # Simplified for test
 
     with torch.no_grad():
-        output = model(context_identities, context_embedding, target_identity)
+        output = model(context_identity, context_embedding, target_identity)
 
     assert output.shape == (batch_size, emb_dim)
