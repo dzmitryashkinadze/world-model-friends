@@ -8,10 +8,15 @@ import sys
 
 import click
 
-from world_model_friends import config
+from world_model_friends.config import get_config
 from world_model_friends.data_wrangling.compile_datasets import compile_datasets
 from world_model_friends.data_wrangling.io import load_parquet_files
+from world_model_friends.decoder.vector_search_decoder import (
+    VectorSearchDecoder,
+)
+from world_model_friends.encoder.embeddings import embed_inference_request
 from world_model_friends.predictor.evaluate import evaluate_world_model
+from world_model_friends.predictor.inference import infer
 from world_model_friends.predictor.train import train_world_model
 
 
@@ -26,7 +31,7 @@ def cli() -> None:
     "--raw_data_file_path",
     "-f",
     type=click.Path(exists=True),
-    default=config.get_config("process", "raw_data_file_path"),
+    default=get_config("process", "raw_data_file_path"),
     help="Path to the CSV file.",
 )
 @click.option(
@@ -39,14 +44,14 @@ def cli() -> None:
     "--num-sequences",
     "-n",
     type=int,
-    default=config.get_config("process", "num_sequences"),
+    default=get_config("process", "num_sequences"),
     help="Number of sequences to generate over all splits.",
 )
 @click.option(
     "--max-context-length",
     "-k",
     type=int,
-    default=config.get_config("process", "max_context_length"),
+    default=get_config("process", "max_context_length"),
     help="Maximum context length.",
 )
 @click.option(
@@ -98,14 +103,14 @@ def run_compile_datasets(
     "--train-file",
     "-t",
     type=click.Path(),
-    default=config.get_config("train", "train_file"),
+    default=get_config("train", "train_file"),
     help="Path to the training parquet file.",
 )
 @click.option(
     "--val-file",
     "-v",
     type=click.Path(),
-    default=config.get_config("train", "val_file"),
+    default=get_config("train", "val_file"),
     help="Path to the validation parquet file.",
 )
 def run_train_world_model(train_file: str, val_file: str) -> None:
@@ -143,7 +148,7 @@ def run_train_world_model(train_file: str, val_file: str) -> None:
     "--test-file",
     "-v",
     type=click.Path(),
-    default=config.get_config("train", "test_file"),
+    default=get_config("train", "test_file"),
     help="Path to the test parquet files.",
 )
 def run_evaluate_world_model(model_path: str, test_file: str) -> None:
@@ -224,7 +229,34 @@ def run_world_model_inference(
     Returns:
         Predicted scipt line (answer).
     """
-    return "TODO"
+    try:
+        # 2. Embed inference request
+        request = embed_inference_request(
+            context_names=context_names,
+            context_text=context,
+            target_name=target_name,
+        )
+
+        # 3. Run inference
+        target_embedding = infer(request, model_path=model_path)
+
+        # 4. Decode
+        decoder_cls = VectorSearchDecoder(
+            get_config("process", "script_with_line_embeddings_path")
+        )
+        results = decoder_cls.decode(target_embedding, speaker=target_name)
+
+        # Return the top result
+        if results:
+            top_result = results[0]
+            return top_result["Lines"]
+        else:
+            click.echo("No results found from decoder.", err=True)
+            return ""
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

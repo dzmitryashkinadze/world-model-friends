@@ -14,7 +14,7 @@ def test_search_returns_top_3_similar_lines() -> None:
     by cosine similarity.
     """
     decoder = VectorSearchDecoder(
-        path="data/Friends_script_embeddings.parquet",
+        script_with_line_embeddings_path="data/Friends_script_embeddings.parquet",
         top_k=3,
     )
     target = np.zeros(3)  # matches dummy data
@@ -30,7 +30,7 @@ def test_search_returns_top_3_similar_lines() -> None:
 def test_search_with_character_filter() -> None:
     """Restrict search to lines spoken by a specific character."""
     decoder = VectorSearchDecoder(
-        path="data/Friends_script_embeddings.parquet",
+        script_with_line_embeddings_path="data/Friends_script_embeddings.parquet",
         top_k=3,
     )
     target = np.zeros(3)
@@ -42,7 +42,7 @@ def test_search_with_character_filter() -> None:
 def test_search_with_different_embedding() -> None:
     """Test with a non-zero embedding."""
     decoder = VectorSearchDecoder(
-        path="data/Friends_script_embeddings.parquet",
+        script_with_line_embeddings_path="data/Friends_script_embeddings.parquet",
         top_k=3,
     )
     target = np.array([1.0, 0.5, -0.2])
@@ -53,7 +53,7 @@ def test_search_with_different_embedding() -> None:
 def test_empty_result_when_no_match() -> None:
     """When filtering by a character that doesn't exist, return empty."""
     decoder = VectorSearchDecoder(
-        path="data/Friends_script_embeddings.parquet",
+        script_with_line_embeddings_path="data/Friends_script_embeddings.parquet",
         top_k=3,
     )
     target = np.zeros(3)
@@ -64,7 +64,7 @@ def test_empty_result_when_no_match() -> None:
 def test_top_k_customization() -> None:
     """Ensure top_k parameter controls the number of results."""
     decoder = VectorSearchDecoder(
-        path="data/Friends_script_embeddings.parquet",
+        script_with_line_embeddings_path="data/Friends_script_embeddings.parquet",
         top_k=5,
     )
     target = np.zeros(3)
