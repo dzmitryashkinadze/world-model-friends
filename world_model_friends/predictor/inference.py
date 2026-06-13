@@ -8,7 +8,9 @@ from world_model_friends.predictor.jepa import JEPAPredictor
 
 
 def infer(
-    request: tuple[list[float], list[float], list[float]], model_path: str
+    request: tuple[list[float], list[float], list[float]],
+    model_path: str,
+    data_path: str,
 ) -> np.ndarray:
     """Run a single forward pass of the JEPA model on an inference request.
 
@@ -16,6 +18,7 @@ def infer(
         request: Tuple of (context_identity, context_embedding, target_identity)
             as returned by ``embed_inference_request()``.
         model: A trained :class:`JEPAPredictor` instance.
+        data_path: Path to the data folder.
 
     Returns:
         np.ndarray: Predicted target embedding of shape ``(1, emb_dim)``.
@@ -40,7 +43,7 @@ def infer(
     ).to(device)
 
     # Load weights
-    state_dict = torch.load(f=model_path, map_location=device)
+    state_dict = torch.load(f=f"{data_path}/{model_path}", map_location=device)
     model.load_state_dict(state_dict)
     model.eval()
     context_identity, context_embedding, target_identity = request

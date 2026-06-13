@@ -1,7 +1,7 @@
 process:
-  #raw_data_file_path: "data/Friends_script.csv"
-  raw_data_file_path: "data/Friends_script_short.csv"
-  script_with_line_embeddings_path: "data/Friends_script_embeddings.parquet"
+  #raw_data_file: "data/Friends_script.csv"
+  raw_data_file: "Friends_script_short.csv"
+  script_with_line_embeddings_file: "Friends_script_embeddings.parquet"
   n_sequences: 50
   max_context_length: 10
   main_characters: [
@@ -21,10 +21,10 @@ embedding:
   batch_size: 10
 
 train:
-  train_file: "data/train.parquet"
-  val_file: "data/val.parquet"
-  test_file: "data/test.parquet"
-  model_artifact_path: "data/best_model.pt"
+  train_file: "train.parquet"
+  val_file: "val.parquet"
+  test_file: "test.parquet"
+  model_artifact_file: "best_model.pt"
   n_layers: 2
   batch_size: 4
   n_heads: 4

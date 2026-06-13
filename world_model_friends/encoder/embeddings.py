@@ -43,7 +43,7 @@ def embed_lines(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def embed_sequences(
-    sequences_df: pl.DataFrame, split_name: str, output_dir: str = "data"
+    sequences_df: pl.DataFrame, split_name: str, data_path: str
 ) -> None:
     """
     Transforms generated sequences into training data by creating semantic embeddings.
@@ -51,8 +51,7 @@ def embed_sequences(
     Args:
         sequences_df (pl.DataFrame): The generated sequences DataFrame.
         split_name (str): Name of the split for output filenames.
-        output_dir (str): Directory to save the processed parquet files
-            Defaults to 'data'.
+        data_path (str): Path to the data folder.
 
     Returns:
         pl.DataFrame: The processed DataFrame containing embeddings.
@@ -85,7 +84,7 @@ def embed_sequences(
                 "target_embedding": target_embeddings[i : i + batch_size],
             }
         )
-        chunk.write_parquet(file=f"{output_dir}/{split_name}_{i}.parquet")
+        chunk.write_parquet(file=f"{data_path}/{split_name}_{i}.parquet")
 
 
 def embed_names(names: list[str]) -> list[float]:

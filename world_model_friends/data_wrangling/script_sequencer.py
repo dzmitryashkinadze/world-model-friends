@@ -15,7 +15,7 @@ def process_split(
     split_name: str,
     n_sequences: int,
     max_context_length: int,
-    output_dir: str = "data",
+    data_path: str,
 ) -> pl.DataFrame | None:
     """
     Process a dataframe split by generating sequences and embedding them.
@@ -25,8 +25,7 @@ def process_split(
         split_name (str): Name of the split (e.g., 'train', 'test').
         n_sequences (int): Number of sequences to generate.
         max_context_length (int): Maximum context length for sequences.
-        output_dir (str): Directory to save the processed parquet files.
-            Defaults to 'data'.
+        data_path (str): Path to the data folder.
 
     Returns:
         pl.DataFrame | None: The processed DataFrame containing embeddings,
@@ -44,7 +43,7 @@ def process_split(
 
     # Embed sequences
     seq_df = embed_sequences(
-        sequences_df=seq_df, split_name=split_name, output_dir=output_dir
+        sequences_df=seq_df, split_name=split_name, data_path=data_path
     )
     print(f"Embedded sequences for {split_name}.")
 

@@ -9,11 +9,16 @@ import polars as pl
 class VectorSearchDecoder:
     """Decode a predicted embedding into dialogue lines."""
 
-    def __init__(self, script_with_line_embeddings_path: str, top_k: int = 3) -> None:
-        self._path = script_with_line_embeddings_path
+    def __init__(
+        self,
+        data_path: str,
+        script_with_line_embeddings_file: str,
+        top_k: int = 3,
+    ) -> None:
+        self._path = script_with_line_embeddings_file
         self._top_k = top_k
         self.lines_df: pl.DataFrame = pl.read_parquet(
-            source=script_with_line_embeddings_path
+            source=f"{data_path}/{script_with_line_embeddings_file}"
         )
         self._embeddings = np.stack(self.lines_df["line_embedding"].to_list())
 

@@ -61,7 +61,7 @@ def test_split_raw_data(dummy_df):
     assert len(train_df) == 4
 
 
-def test_process_split(dummy_df):
+def test_process_split(dummy_df, tmp_path):
     with (
         patch(
             "world_model_friends.data_wrangling.script_sequencer.generate_sequences"
@@ -73,7 +73,7 @@ def test_process_split(dummy_df):
         mock_gen.return_value = pl.DataFrame({"col": [1]})
         mock_emb.return_value = pl.DataFrame({"col": [1]})
 
-        result = process_split(dummy_df, "train", 5, 2)
+        result = process_split(dummy_df, "train", 5, 2, data_path=tmp_path)
         assert result.height == 1
         assert mock_gen.called
         assert mock_emb.called

@@ -28,16 +28,10 @@ def cli() -> None:
 
 @cli.command(name="process")
 @click.option(
-    "--raw_data_file_path",
-    type=click.Path(exists=True),
-    default=get_config(section="process", key="raw_data_file_path"),
+    "--raw_data_file",
+    type=str,
+    default=get_config(section="process", key="raw_data_file"),
     help="Path to the CSV file.",
-)
-@click.option(
-    "--output-dir",
-    type=click.Path(),
-    default="data",
-    help="Directory to save the processed parquet files.",
 )
 @click.option(
     "--n-sequences",
@@ -63,35 +57,41 @@ def cli() -> None:
     default=0.1,
     help="Proportion of raw data for validation.",
 )
+@click.option(
+    "--data_path",
+    type=str,
+    default="data",
+    help="Data folder path",
+)
 def run_compile_datasets(
-    raw_data_file_path: str,
-    output_dir: str,
+    raw_data_file: str,
     n_sequences: int,
     max_context_length: int,
     test_ratio: float,
     val_ratio: float,
+    data_path: str,
 ) -> None:
     """
     Reads CSV, splits sequentially, generates, embeds and stores on disk.
 
     Args:
-        raw_data_file_path (str): Path to the CSV file.
-        output_dir (str): Directory to save the processed data.
+        raw_data_file (str): Path to the CSV file.
         n_sequences (int): Number of sequences to generate over all splits.
         max_context_length (int): Maximum context length.
         test_ratio (float): Proportion of raw data for testing.
         val_ratio (float): Proportion of raw data for validation.
+        data_path (str): Data folder path
 
     Returns:
         None
     """
     compile_datasets(
-        raw_data_file_path=raw_data_file_path,
-        output_dir=output_dir,
+        raw_data_file=raw_data_file,
         n_sequences=n_sequences,
         max_context_length=max_context_length,
         test_ratio=test_ratio,
         val_ratio=val_ratio,
+        data_path=data_path,
     )
 
 
@@ -108,22 +108,26 @@ def run_compile_datasets(
     default=get_config(section="train", key="val_file"),
     help="Path to the validation parquet file.",
 )
-def run_train_world_model(train_file: str, val_file: str) -> None:
+@click.option(
+    "--data_path", type=click.Path(), default="data", help="Path to the data folder"
+)
+def run_train_world_model(train_file: str, val_file: str, data_path: str) -> None:
     """
     Trains the world model using the provided parquet files.
 
     Args:
         train_file (str): Path to the training parquet file.
         val_file (str): Path to the validation parquet file.
+        data_path (str): Path to the data folder.
 
     Returns:
         None
     """
     try:
-        train_df = load_parquet_files(pattern=train_file)
-        val_df = load_parquet_files(pattern=val_file)
+        train_df = load_parquet_files(pattern=train_file, data_path=data_path)
+        val_df = load_parquet_files(pattern=val_file, data_path=data_path)
 
-        train_world_model(train_df=train_df, val_df=val_df)
+        train_world_model(train_df=train_df, val_df=val_df, data_path=data_path)
         click.echo(message="Training completed successfully.")
 
     except Exception as e:
@@ -144,13 +148,17 @@ def run_train_world_model(train_file: str, val_file: str) -> None:
     default=get_config(section="train", key="test_file"),
     help="Path to the test parquet files.",
 )
-def run_evaluate_world_model(model_path: str, test_file: str) -> None:
+@click.option(
+    "--data-path", type=click.Path(), default="data", help="Path to data folder"
+)
+def run_evaluate_world_model(model_path: str, test_file: str, data_path: str) -> None:
     """
     Evaluates a trained world model artifact.
 
     Args:
         model_path (str): Path to the model artifact (.pt).
         test_file (str): Path to the test parquet files.
+        data_path (str): Path to the data folder.
 
     Returns:
         None
@@ -160,7 +168,7 @@ def run_evaluate_world_model(model_path: str, test_file: str) -> None:
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        test_df = load_parquet_files(pattern=test_file)
+        test_df = load_parquet_files(pattern=test_file, data_path=data_path)
         evaluate_world_model(model_path, test_df, device)
 
     except Exception as e:
@@ -190,15 +198,17 @@ def run_evaluate_world_model(model_path: str, test_file: str) -> None:
 )
 @click.option(
     "--model-path",
-    type=click.Path(exists=True),
-    default=get_config(section="train", key="model_artifact_path"),
+    type=str,
+    default=get_config(section="train", key="model_artifact_file"),
     help="Path to the model artifact (.pt).",
 )
+@click.option("--data-path", type=str, default="data", help="Path to the data folder.")
 def run_world_model_inference(
     context: str,
     context_names: list[str],
     target_name: str,
     model_path: str,
+    data_path: str,
 ) -> str:
     """
     Runs the world model inference
@@ -207,6 +217,7 @@ def run_world_model_inference(
         context: Context for world model prediction
         target_identity: Target identity for the prediction
         model_path: Model path
+        data_path: Path to the data folder.
 
     Returns:
         Predicted scipt line (answer).
@@ -220,13 +231,14 @@ def run_world_model_inference(
         )
 
         # 3. Run inference
-        target_embedding = infer(request, model_path=model_path)
+        target_embedding = infer(request, model_path=model_path, data_path=data_path)
 
         # 4. Decode
         decoder_cls = VectorSearchDecoder(
-            script_with_line_embeddings_path=get_config(
-                section="process", key="script_with_line_embeddings_path"
-            )
+            data_path=data_path,
+            script_with_line_embeddings_file=get_config(
+                section="process", key="script_with_line_embeddings_file"
+            ),
         )
         results = decoder_cls.decode(
             target_embedding=target_embedding, speaker=target_name

@@ -72,7 +72,7 @@ def test_embed_sequences():
         mock_embed.side_effect = lambda texts: [[0.1, 0.1] for _ in texts]
 
         with patch("polars.DataFrame.write_parquet") as mock_write:
-            # Use a dummy output_dir
-            embed_sequences(sequences_df, split_name="test", output_dir=".")
+            # Use a dummy data_path
+            embed_sequences(sequences_df, split_name="test", data_path=".")
 
             assert mock_write.called

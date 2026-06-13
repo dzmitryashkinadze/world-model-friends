@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
@@ -6,16 +7,12 @@ import polars as pl
 from world_model_friends.data_wrangling.compile_datasets import compile_datasets
 
 
-def test_compile_datasets_integration(tmp_path):
+def test_compile_datasets_integration():
     # [0] Set up test folder structure
     # We'll use tmp_path which is a pytest fixture for a temporary directory.
     # This satisfies the requirement of a test folder structure and handles cleanup.
 
-    test_data_dir = tmp_path / "test_data"
-    test_data_dir.mkdir()
-    test_output_dir = tmp_path / "test_output"
-    test_output_dir.mkdir()
-
+    test_data_dir = Path("tests/data")
     synthetic_csv = test_data_dir / "synthetic.csv"
 
     # [1] Hard code a synthetic CSV
@@ -49,8 +46,8 @@ Bob,Agreed!
     with patch("world_model_friends.encoder.embeddings.model.encode", fake_encode):
         # run the logic
         compile_datasets(
-            raw_data_file_path=str(synthetic_csv),
-            output_dir=str(test_output_dir),
+            raw_data_file="synthetic.csv",
+            data_path=str(test_data_dir),
             n_sequences=10,
             max_context_length=3,
             test_ratio=0.2,
@@ -59,7 +56,11 @@ Bob,Agreed!
 
     # [3] Tests on final files
     # Check that parquet files were created in the output directory
-    output_files = list(test_output_dir.glob("*.parquet"))
+    output_files = [
+        f"{str(test_data_dir)}/test.parquet",
+        f"{str(test_data_dir)}/val.parquet",
+        f"{str(test_data_dir)}/train.parquet",
+    ]
     assert len(output_files) > 0
 
     for file_path in output_files:
@@ -74,14 +75,6 @@ Bob,Agreed!
                 "target_embedding",
             ]
         )
-
-    has_train = any("train" in f.name for f in output_files)
-    has_test = any("test" in f.name for f in output_files)
-    has_val = any("val" in f.name for f in output_files)
-
-    assert has_train
-    assert has_test
-    assert has_val
 
     # [4] Clean up
     # tmp_path handles it.

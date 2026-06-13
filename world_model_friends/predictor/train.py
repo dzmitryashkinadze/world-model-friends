@@ -113,13 +113,16 @@ def validate(
     return total_loss / len(dataloader)
 
 
-def train_world_model(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
+def train_world_model(
+    train_df: pl.DataFrame, val_df: pl.DataFrame, data_path: str
+) -> None:
     """
     Main training entry point.
 
     Args:
         train_df (pl.DataFrame): The training dataset as a Polars DataFrame.
         val_df (pl.DataFrame): The validation dataset as a Polars DataFrame.
+        data_path (str): Tre path to the data folder.
 
     Returns:
         None
@@ -222,7 +225,9 @@ def train_world_model(train_df: pl.DataFrame, val_df: pl.DataFrame) -> None:
             counter = 0
             torch.save(
                 obj=model.state_dict(),
-                f=get_config(section="train", key="model_artifact_path"),
+                f=f"{data_path}/{
+                    get_config(section='train', key='model_artifact_file')
+                }",
             )
             print(f"  --> New best model saved (Val Loss: {best_val_loss:.6f})")
         else:
